@@ -1,0 +1,44 @@
+# Arquivo gerado para um projeto Node.js + React
+
+### --- Geral --- ###
+# Arquivos de ambiente - NUNCA ENVIE PARA O GITHUB
+# Contém senhas, chaves de API e outras informações sensíveis.
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Arquivos de log
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos de configuração de editores
+.vscode/
+.idea/
+
+
+### --- Backend (Pasta /server) --- ###
+# Pasta de dependências do Node.js (pode ter gigabytes!)
+server/node_modules/
+
+# Arquivos de build/distribuição do backend (se houver)
+server/dist/
+server/build/
+
+
+### --- Frontend (Pasta /client) --- ###
+# Pasta de dependências do React/Frontend
+client/node_modules/
+
+# Pasta de build do React (arquivos finais para produção)
+client/build/
+
+# Relatórios de teste
+client/coverage/
