@@ -42,3 +42,7 @@ client/build/
 
 # Relatórios de teste
 client/coverage/
+
+### --- Raiz do Projeto (scripts compartilhados) --- ###
+node_modules/
+# NÃO ignore package.json ou package-lock.json
