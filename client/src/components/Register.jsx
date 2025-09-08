@@ -7,14 +7,14 @@ const Register = () => {
     const [formData, setFormData] = useState({
         nome: '',
         email: '',
-        password: '',
+        senha: '',
     });
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const navigate = useNavigate(); // Hook para navegação
 
     // ALTERADO: Desestruturado 'nome'
-    const { nome, email, password } = formData;
+    const { nome, email, senha } = formData;
 
     const onChange = (e) =>
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,11 +23,11 @@ const Register = () => {
         e.preventDefault();
         try {
             // ALTERADO: URL da API aponta para a porta 3001
-            // ALTERADO: Enviando 'nome' junto com email e password
+            // ALTERADO: Enviando 'nome' junto com email e senha
             const res = await axios.post('http://localhost:3001/api/register', {
                 nome,
                 email,
-                password,
+                senha,
             });
 
             setMessage(res.data.message + ' Redirecionando para o login...');
@@ -71,10 +71,10 @@ const Register = () => {
                 </div>
                 <div className="form-group">
                     <input
-                        type="password"
+                        type="senha"
                         placeholder="Senha (mínimo 6 caracteres)"
-                        name="password"
-                        value={password}
+                        name="senha"
+                        value={senha}
                         onChange={onChange}
                         minLength="6"
                         required

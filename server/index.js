@@ -58,7 +58,7 @@ app.post('/api/register', async (req, res) => {
 
         // 3. Insere o novo usuário no banco de dados
         const [result] = await pool.execute(
-            "INSERT INTO usuarios (nome, email, password) VALUES (?, ?, ?)",
+            "INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)",
             [nome, email, hashedPassword]
         );
 
