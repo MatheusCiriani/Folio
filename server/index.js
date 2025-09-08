@@ -1,84 +1,134 @@
+// server/index.js
+require('dotenv').config(); // Carrega as variáveis do arquivo .env
+
+// --- Importações ---
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const pool = require('./db'); // Importa nossa conexão com o banco de dados
 
+// --- Configuração do App ---
 const app = express();
-app.use(cors()); // Permite requisições de outras origens (nosso React app)
+const PORT = process.env.PORT || 3001;
+
+// --- Middlewares ---
+app.use(cors()); // Permite requisições de diferentes origens (ex: seu app React)
 app.use(express.json()); // Habilita o parsing de JSON no corpo das requisições
 
-// --- Simulação de um banco de dados ---
-// Em uma aplicação real, você usaria MongoDB, PostgreSQL, etc.
-const users = [];
-const SECRET_KEY = 'sua-chave-super-secreta-aqui'; // Mude isso em um projeto real
+// --- Função para Criar Admin (Seed) ---
+// Roda uma única vez na inicialização para garantir que um admin sempre exista
+// const createAdminIfNotExists = async () => {
+//     try {
+//         const adminEmail = process.env.ADMIN_EMAIL;
+//         const [rows] = await pool.execute("SELECT * FROM users WHERE email = ?", [adminEmail]);
+        
+//         if (rows.length === 0) {
+//             console.log(`Nenhum usuário admin encontrado. Criando admin com email: ${adminEmail}`);
+//             const adminNome = process.env.ADMIN_NOME;
+//             const adminPassword = process.env.ADMIN_PASSWORD;
+            
+//             const hashedPassword = await bcrypt.hash(adminPassword, 10);
+            
+//             await pool.execute(
+//                 "INSERT INTO users (nome, email, password, role) VALUES (?, ?, ?, ?)",
+//                 [adminNome, adminEmail, hashedPassword, 'admin']
+//             );
+//             console.log('✅ Usuário admin criado com sucesso!');
+//         } else {
+//             console.log('Usuário admin já existe.');
+//         }
+//     } catch (error) {
+//         console.error('❌ Erro ao criar usuário admin:', error);
+//     }
+// };
 
 // --- Rota de Cadastro (Register) ---
 app.post('/api/register', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+    try {
+        const { nome, email, password } = req.body;
+        
+        // 1. Validação dos campos
+        if (!nome || !email || !password) {
+            return res.status(400).json({ message: "Por favor, preencha todos os campos." });
+        }
 
-    // 1. Validação básica
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email e senha são obrigatórios.' });
+        // 2. Criptografa a senha
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // 3. Insere o novo usuário no banco de dados
+        const [result] = await pool.execute(
+            "INSERT INTO users (nome, email, password) VALUES (?, ?, ?)",
+            [nome, email, hashedPassword]
+        );
+
+        res.status(201).json({ message: "Usuário criado com sucesso!", userId: result.insertId });
+
+    } catch (error) {
+        // 4. Tratamento de erros
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).json({ message: "Este e-mail já está em uso." });
+        }
+        console.error("Erro no registro:", error);
+        res.status(500).json({ message: "Erro no servidor ao tentar registrar." });
     }
-
-    // 2. Verifica se o usuário já existe
-    const existingUser = users.find(user => user.email === email);
-    if (existingUser) {
-      return res.status(400).json({ message: 'Este email já está em uso.' });
-    }
-
-    // 3. Criptografa a senha
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 é o "salt rounds"
-
-    // 4. Salva o novo usuário
-    const newUser = { id: users.length + 1, email, password: hashedPassword };
-    users.push(newUser);
-
-    console.log('Usuários cadastrados:', users);
-    res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
-
-  } catch (error) {
-    res.status(500).json({ message: 'Erro no servidor.', error });
-  }
 });
 
 // --- Rota de Login ---
 app.post('/api/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
+        
+        // 1. Validação dos campos
+        if (!email || !password) {
+            return res.status(400).json({ message: "Por favor, preencha e-mail e senha." });
+        }
 
-    // 1. Validação básica
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email e senha são obrigatórios.' });
+        // 2. Busca o usuário pelo e-mail
+        // Corrigido para buscar da tabela 'users'
+        const [rows] = await pool.execute("SELECT * FROM users WHERE email = ?", [email]);
+
+        if (rows.length === 0) {
+            return res.status(401).json({ message: "Email ou senha inválidos." });
+        }
+
+        const user = rows[0];
+
+        // 3. Compara a senha enviada com a senha armazenada (hash)
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+        if (!isPasswordCorrect) {
+            return res.status(401).json({ message: "Email ou senha inválidos." });
+        }
+
+        // 4. Gera o Token JWT
+        const token = jwt.sign(
+            { id: user.id, email: user.email, nome: user.nome, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' } // Token expira em 1 hora
+        );
+
+        // 5. Envia a resposta de sucesso
+        res.status(200).json({
+            message: "Login bem-sucedido!",
+            token,
+            user: {
+                id: user.id,
+                nome: user.nome,
+                email: user.email,
+                role: user.role
+            }
+        });
+
+    } catch (error) {
+        console.error("Erro no login:", error);
+        res.status(500).json({ message: "Erro no servidor ao tentar fazer login." });
     }
-
-    // 2. Encontra o usuário
-    const user = users.find(user => user.email === email);
-    if (!user) {
-      return res.status(400).json({ message: 'Credenciais inválidas.' }); // Mensagem genérica por segurança
-    }
-
-    // 3. Compara a senha enviada com a senha criptografada no "banco"
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    if (!isPasswordCorrect) {
-      return res.status(400).json({ message: 'Credenciais inválidas.' });
-    }
-
-    // 4. Gera o Token JWT
-    const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, {
-      expiresIn: '1h', // Token expira em 1 hora
-    });
-
-    res.status(200).json({ message: 'Login bem-sucedido!', token });
-
-  } catch (error) {
-    res.status(500).json({ message: 'Erro no servidor.', error });
-  }
 });
 
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+// --- Iniciar o Servidor ---
+app.listen(PORT, async () => {
+    console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    // Após o servidor iniciar, verifica e cria o usuário admin se necessário
+    // await createAdminIfNotExists();
 });
