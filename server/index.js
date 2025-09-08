@@ -46,23 +46,23 @@ app.use(express.json()); // Habilita o parsing de JSON no corpo das requisiçõe
 // --- Rota de Cadastro (Register) ---
 app.post('/api/register', async (req, res) => {
     try {
-        const { nome, email, password } = req.body;
+        const { nome, email, senha } = req.body;
         
         // 1. Validação dos campos
-        if (!nome || !email || !password) {
+        if (!nome || !email || !senha) {
             return res.status(400).json({ message: "Por favor, preencha todos os campos." });
         }
 
         // 2. Criptografa a senha
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(senha, 10);
 
         // 3. Insere o novo usuário no banco de dados
         const [result] = await pool.execute(
-            "INSERT INTO users (nome, email, password) VALUES (?, ?, ?)",
+            "INSERT INTO usuarios (nome, email, password) VALUES (?, ?, ?)",
             [nome, email, hashedPassword]
         );
 
-        res.status(201).json({ message: "Usuário criado com sucesso!", userId: result.insertId });
+        res.status(201).json({ message: "Usuário criado com sucesso!", usuariosId: result.insertId });
 
     } catch (error) {
         // 4. Tratamento de erros
@@ -77,32 +77,32 @@ app.post('/api/register', async (req, res) => {
 // --- Rota de Login ---
 app.post('/api/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, senha } = req.body;
         
         // 1. Validação dos campos
-        if (!email || !password) {
+        if (!email || !senha) {
             return res.status(400).json({ message: "Por favor, preencha e-mail e senha." });
         }
 
         // 2. Busca o usuário pelo e-mail
         // Corrigido para buscar da tabela 'users'
-        const [rows] = await pool.execute("SELECT * FROM users WHERE email = ?", [email]);
+        const [rows] = await pool.execute("SELECT * FROM usuarios WHERE email = ?", [email]);
 
         if (rows.length === 0) {
             return res.status(401).json({ message: "Email ou senha inválidos." });
         }
 
-        const user = rows[0];
+        const usuarios = rows[0];
 
         // 3. Compara a senha enviada com a senha armazenada (hash)
-        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+        const isPasswordCorrect = await bcrypt.compare(senha, usuarios.senha);
         if (!isPasswordCorrect) {
             return res.status(401).json({ message: "Email ou senha inválidos." });
         }
 
         // 4. Gera o Token JWT
         const token = jwt.sign(
-            { id: user.id, email: user.email, nome: user.nome, role: user.role },
+            { id: usuarios.id, email: usuarios.email, nome: usuarios.nome, role: usuarios.role },
             process.env.JWT_SECRET,
             { expiresIn: '1h' } // Token expira em 1 hora
         );
@@ -111,11 +111,11 @@ app.post('/api/login', async (req, res) => {
         res.status(200).json({
             message: "Login bem-sucedido!",
             token,
-            user: {
-                id: user.id,
-                nome: user.nome,
-                email: user.email,
-                role: user.role
+            usuarios: {
+                id: usuarios.id,
+                nome: usuarios.nome,
+                email: usuarios.email,
+                role: usuarios.role
             }
         });
 

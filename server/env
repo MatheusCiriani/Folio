@@ -1,8 +1,0 @@
-JWT_SECRET = umSegredoMuitoSeguro123
-
-PORT=3001
-
-DH_HOST = mysql-foliobooks.alwaysdata.net
-DB_USER = 
-DB_PASSWORD = 
-DB_NAME = foliobooks_db

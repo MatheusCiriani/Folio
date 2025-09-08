@@ -5,13 +5,13 @@ import { useNavigate } from 'react-router-dom';
 const Login = () => {
     const [formData, setFormData] = useState({
         email: '',
-        password: '',
+        senha: '',
     });
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const navigate = useNavigate();
 
-    const { email, password } = formData;
+    const { email, senha } = formData;
 
     const onChange = (e) =>
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -19,30 +19,30 @@ const Login = () => {
     const onSubmit = async (e) => {
         e.preventDefault();
         try {
-            // ALTERADO: URL da API aponta para a porta 3001
+            
             const res = await axios.post('http://localhost:3001/api/login', {
                 email,
-                password,
+                senha,
             });
 
-            // Salva o token e os dados do usuário no Local Storage
+            
             localStorage.setItem('token', res.data.token);
-            // NOVO: Salva o objeto do usuário para fácil acesso (ex: "Bem-vindo, Elias!")
-            localStorage.setItem('user', JSON.stringify(res.data.user));
+            
+            localStorage.setItem('usuarios', JSON.stringify(res.data.usuarios));
 
             setMessage('Login bem-sucedido! Redirecionando...');
             setIsError(false);
 
-            // NOVO: Redireciona para o dashboard após 1.5 segundos
+            
             setTimeout(() => {
-                navigate('/dashboard'); // Ou para a página principal do app
+                navigate('/dashboard'); 
             }, 1500);
 
         } catch (err) {
             setMessage(err.response?.data?.message || 'Erro ao fazer login.');
             setIsError(true);
             localStorage.removeItem('token');
-            localStorage.removeItem('user'); // NOVO: Limpa também o usuário
+            localStorage.removeItem('usuarios'); 
         }
     };
 
@@ -62,10 +62,10 @@ const Login = () => {
                 </div>
                 <div className="form-group">
                     <input
-                        type="password"
+                        type="senha"
                         placeholder="Senha"
-                        name="password"
-                        value={password}
+                        name="senha"
+                        value={senha}
                         onChange={onChange}
                         required
                     />
