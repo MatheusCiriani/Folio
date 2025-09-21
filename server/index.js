@@ -43,6 +43,32 @@ app.use(express.json()); // Habilita o parsing de JSON no corpo das requisiçõe
 //     }
 // };
 
+// --- Rotas da API ---
+
+// Rota para exibir os detalhes de um livro pelo ID
+// Método: GET
+// URL: /api/books/:id
+app.get('/api/books/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Executa a query no banco de dados para buscar o livro
+        // O nome da tabela 'livros' está correto, conforme seu print
+        const [rows] = await pool.execute("SELECT * FROM livros WHERE id = ?", [id]);
+
+        // Verifica se o livro foi encontrado
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Livro não encontrado' });
+        }
+
+        const book = rows[0];
+        res.status(200).json(book);
+    } catch (error) {
+        console.error('Erro ao buscar o livro:', error);
+        res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+});
+
 // --- Rota de Cadastro (Register) ---
 app.post('/api/register', async (req, res) => {
     try {
