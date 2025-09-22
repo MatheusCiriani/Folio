@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+/*import React, { useState } from 'react';
 import Register from './components/Register';
 import Login from './components/Login';
 import './App.css';
@@ -31,6 +31,23 @@ function App() {
         )}
       </div>
     </div>
+  );
+}
+
+export default App;
+*/
+// client/src/App.js
+
+import React from 'react';
+import BookDetails from './components/BookDetails';
+// import './App.css'; // O CSS principal pode não ser necessário aqui
+
+function App() {
+  // Por enquanto, vamos exibir apenas a página de detalhes para teste
+  return (
+    <main>
+      <BookDetails />
+    </main>
   );
 }
 
