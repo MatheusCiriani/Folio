@@ -1,36 +1,65 @@
 import React, { useState } from 'react';
-import Register from './components/Register';
-import Login from './components/Login';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import AuthModal from './components/AuthModal'; // Criaremos este a seguir
+
+// Importando as páginas
+import HomePage from './pages/HomePage';
+import BookDetailPage from './pages/BookDetailPage';
+import AddBookPage from './pages/AddBookPage';
+import EditBookPage from './pages/EditBookPage';
+
+import ProtectedRoute from './components/ProtectedRoute'; // <<< IMPORTE A ROTA PROTEGIDA
+
+
 import './App.css';
 
-// Importando o logo da pasta assets
-import folioLogo from './assets/folio-logo.jpeg';
-
 function App() {
-  const [isLoginView, setIsLoginView] = useState(true);
+  const [authModal, setAuthModal] = useState({ isOpen: false, view: 'login' });
+
+  const openAuthModal = (view) => {
+    setAuthModal({ isOpen: true, view });
+  };
+
+  const closeAuthModal = () => {
+    setAuthModal({ isOpen: false, view: 'login' });
+  };
+
+  // Esta função será chamada após o login bem-sucedido
+  const handleLoginSuccess = () => {
+      closeAuthModal(); // Fecha o modal
+      window.location.reload(); // Recarrega a página para refletir o estado de login
+  };
 
   return (
-    <div className="auth-container">
-      <div className="logo-container">
-        <img src={folioLogo} alt="Fólio Logo" />
-      </div>
+    <Router>
+      <div className="App">
+        <Navbar openAuthModal={openAuthModal} />
+        
+        <main>
+          <Routes>
+            {/* Rotas Públicas */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/book/:id" element={<BookDetailPage openAuthModal={openAuthModal} />} />
+            
+            {/* Rotas de Admin Protegidas */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/admin/add-book" element={<AddBookPage />} />
+              <Route path="/admin/edit-book/:id" element={<EditBookPage />} />
+            </Route>
 
-      {isLoginView ? <Login /> : <Register />}
+          </Routes>
+        </main>
 
-      <div className="toggle-auth">
-        {isLoginView ? (
-          <p>
-            Não tem uma conta?{' '}
-            <button onClick={() => setIsLoginView(false)}>Cadastre-se</button>
-          </p>
-        ) : (
-          <p>
-            Já tem uma conta?{' '}
-            <button onClick={() => setIsLoginView(true)}>Faça login</button>
-          </p>
+        {authModal.isOpen && (
+          <AuthModal
+            initialView={authModal.view}
+            closeModal={closeAuthModal}
+            onLoginSuccess={handleLoginSuccess} // Passe a função aqui
+          />
         )}
       </div>
-    </div>
+    </Router>
   );
 }
 

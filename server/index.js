@@ -11,6 +11,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+const { authMiddleware, adminMiddleware } = require('./authMiddleware'); // Importe o middleware
 // --- Configuração do App ---
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -45,6 +46,19 @@ app.use(express.json()); // Habilita o parsing de JSON no corpo das requisiçõe
 //         console.error('❌ Erro ao criar usuário admin:', error);
 //     }
 // };
+
+// NOVA ROTA: Buscar todos os livros
+// Método: GET
+// URL: /api/books
+app.get('/api/books', async (req, res) => {
+    try {
+        const [rows] = await pool.execute("SELECT * FROM livros ORDER BY titulo ASC");
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error('Erro ao buscar todos os livros:', error);
+        res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+});
 
 // Define o diretório onde as imagens serão salvas
 const uploadDir = 'uploads/';
@@ -98,7 +112,7 @@ app.get('/api/books/:id', async (req, res) => {
 
 // NOVO ENDPOINT: Criar um novo livro
 // O middleware 'upload.single('capa')' processa o upload de um arquivo do campo 'capa'
-app.post('/api/books', upload.single('capa'), async (req, res) => {
+app.post('/api/books', authMiddleware, adminMiddleware, upload.single('capa'), async (req, res) => {
     try {
         const { titulo, autor, sinopse } = req.body;
 
@@ -134,7 +148,7 @@ app.post('/api/books', upload.single('capa'), async (req, res) => {
 });
 
 // NOVO ENDPOINT: Editar um livro existente
-app.put('/api/books/:id', upload.single('capa'), async (req, res) => {
+app.put('/api/books/:id', authMiddleware, adminMiddleware, upload.single('capa'), async (req, res) => {
     try {
         const { id } = req.params;
         const { titulo, autor, sinopse } = req.body;
@@ -258,6 +272,168 @@ app.post('/api/login', async (req, res) => {
         res.status(500).json({ message: "Erro no servidor ao tentar fazer login." });
     }
 });
+
+// ...
+
+// ROTA DE COMENTÁRIOS ATUALIZADA PARA INCLUIR A NOTA
+app.get('/api/books/:id/comments', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [comments] = await pool.execute(
+            `SELECT 
+                c.id, 
+                c.texto, 
+                c.criado_em,
+                c.usuario_id,
+                COALESCE(u.nome, 'Usuário Desconhecido') as usuario_nome, 
+                (SELECT COUNT(*) FROM curtidas cu WHERE cu.comentario_id = c.id) as curtidas,
+                a.nota  /* <<< ADICIONAMOS A NOTA DA AVALIAÇÃO */
+            FROM comentarios c
+            LEFT JOIN usuarios u ON c.usuario_id = u.id
+            /* Fazemos o JOIN na tabela de avaliações pelo mesmo usuário E mesmo livro */
+            LEFT JOIN avaliacoes a ON c.usuario_id = a.usuario_id AND c.livro_id = a.livro_id
+            WHERE c.livro_id = ?
+            ORDER BY c.criado_em DESC`,
+            [id]
+        );
+        res.status(200).json(comments);
+    } catch (error) {
+        console.error('Erro ao buscar comentários:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao buscar comentários' });
+    }
+});
+
+// ...
+
+// NOVA ROTA: Atualizar (EDITAR) um comentário/avaliação
+app.put('/api/comments/:commentId', authMiddleware, async (req, res) => {
+    try {
+        const { commentId } = req.params;
+        const { id: usuario_id } = req.user;
+        const { texto, nota } = req.body;
+
+        // 1. Busca o comentário para pegar o livro_id e verificar o dono
+        const [rows] = await pool.execute('SELECT * FROM comentarios WHERE id = ?', [commentId]);
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Comentário não encontrado.' });
+        }
+
+        const comentario = rows[0];
+        if (comentario.usuario_id !== usuario_id) {
+            return res.status(403).json({ message: 'Acesso negado. Você não é o autor deste comentário.' });
+        }
+
+        // 2. Atualiza o texto do comentário
+        await pool.execute('UPDATE comentarios SET texto = ? WHERE id = ?', [texto, commentId]);
+
+        // 3. Atualiza a nota na tabela de avaliações
+        await pool.execute(
+            'UPDATE avaliacoes SET nota = ? WHERE livro_id = ? AND usuario_id = ?',
+            [nota, comentario.livro_id, usuario_id]
+        );
+
+        res.status(200).json({ message: 'Avaliação atualizada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao atualizar avaliação:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
+
+// ROTA: Deletar um comentário/avaliação
+app.delete('/api/comments/:commentId', authMiddleware, async (req, res) => {
+    try {
+        const { commentId } = req.params;
+        const { id: usuario_id } = req.user;
+
+        // 1. Busca o comentário para pegar o livro_id e verificar o dono
+        const [rows] = await pool.execute('SELECT * FROM comentarios WHERE id = ?', [commentId]);
+        if (rows.length === 0) {
+            return res.status(200).json({ message: 'Comentário já removido.' });
+        }
+
+        const comentario = rows[0];
+        if (comentario.usuario_id !== usuario_id) {
+            return res.status(403).json({ message: 'Acesso negado.' });
+        }
+        
+        // IMPORTANTE: Primeiro deletamos a avaliação, depois o comentário.
+        // Se o comentário for deletado primeiro, perdemos a referência para deletar a avaliação.
+        await pool.execute(
+            'DELETE FROM avaliacoes WHERE livro_id = ? AND usuario_id = ?',
+            [comentario.livro_id, usuario_id]
+        );
+        await pool.execute('DELETE FROM comentarios WHERE id = ?', [commentId]);
+
+        res.status(200).json({ message: 'Avaliação deletada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao deletar avaliação:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
+// ROTA DE AVALIAÇÃO ATUALIZADA E ROBUSTA
+app.get('/api/books/:id/rating', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const [result] = await pool.execute(
+            // COALESCE garante que, se AVG(nota) for NULL, o valor 0 será retornado no lugar.
+            `SELECT 
+                COALESCE(AVG(nota), 0) as media_avaliacoes, 
+                COUNT(nota) as total_avaliacoes
+            FROM avaliacoes
+            WHERE livro_id = ?`,
+            [id]
+        );
+        res.status(200).json(result[0]);
+    } catch (error) {
+        console.error('Erro ao buscar avaliação:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao buscar avaliação' });
+    }
+});
+
+
+// NOVA ROTA: Adicionar um comentário e uma avaliação
+app.post('/api/books/:id/review', authMiddleware, async (req, res) => {
+    try {
+        const { id: livro_id } = req.params; // Pega o ID do livro da URL
+        const { id: usuario_id } = req.user;   // Pega o ID do usuário do token (via authMiddleware)
+        const { texto, nota } = req.body;      // Pega o texto e a nota do corpo da requisição
+
+        // 1. Validação dos dados recebidos
+        if (!texto || !nota) {
+            return res.status(400).json({ message: 'O texto do comentário e a nota são obrigatórios.' });
+        }
+        if (nota < 1 || nota > 5) {
+            return res.status(400).json({ message: 'A nota deve ser entre 1 e 5.' });
+        }
+
+        // 2. Inserir o comentário
+        await pool.execute(
+            'INSERT INTO comentarios (livro_id, usuario_id, texto) VALUES (?, ?, ?)',
+            [livro_id, usuario_id, texto]
+        );
+
+        // 3. Inserir OU ATUALIZAR a avaliação
+        // Graças ao índice único que criamos, podemos usar ON DUPLICATE KEY UPDATE.
+        // Se o usuário já avaliou, apenas atualiza a nota. Se não, insere uma nova.
+        await pool.execute(
+            'INSERT INTO avaliacoes (livro_id, usuario_id, nota) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE nota = ?',
+            [livro_id, usuario_id, nota, nota] // A nota é passada duas vezes para o update
+        );
+
+        res.status(201).json({ message: 'Avaliação enviada com sucesso!' });
+
+    } catch (error) {
+        console.error('Erro ao salvar avaliação:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao salvar avaliação.' });
+    }
+});
+
+// ... (resto do arquivo)
+
+
+// ... (resto do seu arquivo)
 
 
 // --- Iniciar o Servidor ---

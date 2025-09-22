@@ -1,16 +1,11 @@
-// client/src/index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom'; // Importe o BrowserRouter
-import App from './App';
-import './index.css';
+import './index.css'; // Importa o CSS global
+import App from './App'; // Importa o componente principal
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    {/* O BrowserRouter deve envolver toda a sua aplicação */}
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <App />
   </React.StrictMode>
 );
