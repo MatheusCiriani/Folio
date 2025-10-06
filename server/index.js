@@ -10,6 +10,7 @@ const pool = require('./db'); // Importa nossa conexão com o banco de dados
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { protect } = require('./authMiddleware');
 
 // --- Configuração do App ---
 const app = express();
@@ -174,6 +175,111 @@ app.put('/api/books/:id', upload.single('capa'), async (req, res) => {
     } catch (error) {
         console.error('Erro ao editar o livro:', error);
         res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+});
+
+// --- ROTAS DE COMENTÁRIOS ---
+
+// Endpoint: Enviar/Criar um novo comentário
+// Método: POST
+// URL: /api/comentarios
+app.post('/api/comentarios', protect, async (req, res) => {
+    try {
+        // Agora você pode usar req.usuario.id, que é o usuário logado
+        const usuario_id = req.usuario.id; 
+        const { livro_id, texto } = req.body; 
+
+        // Validação básica (usuario_id já veio do token)
+        if (!livro_id || !texto) {
+            return res.status(400).json({ 
+                message: 'Os campos livro_id e texto são obrigatórios.' 
+            });
+        }
+
+        const query = 'INSERT INTO comentarios (livro_id, usuario_id, texto) VALUES (?, ?, ?)';
+        
+        const [result] = await pool.execute(query, [livro_id, usuario_id, texto]);
+
+        res.status(201).json({
+            message: 'Comentário criado com sucesso!',
+            id: result.insertId,
+            livro_id,
+            usuario_id,
+            texto
+        });
+
+    } catch (error) {
+        console.error('Erro ao criar o comentário:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao criar o comentário.' });
+    }
+});
+
+// Endpoint: Recuperar todos os comentários de um livro
+// Método: GET
+// URL: /api/comentarios/livro/:livro_id
+app.get('/api/comentarios/livro/:livro_id', async (req, res) => {
+    try {
+        const { livro_id } = req.params;
+
+        // Query que busca comentários do livro_id, e ordena do mais novo para o mais antigo.
+        // O JOIN é opcional, mas útil para trazer o nome do usuário junto.
+        const query = `
+            SELECT 
+                c.id, 
+                c.texto, 
+                c.criado_em, 
+                u.nome AS usuario_nome, 
+                u.id AS usuario_id 
+            FROM comentarios c
+            JOIN usuarios u ON c.usuario_id = u.id
+            WHERE c.livro_id = ?
+            ORDER BY c.criado_em ASC;
+        `;
+
+        const [rows] = await pool.execute(query, [livro_id]);
+
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error('Erro ao buscar comentários:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao buscar comentários.' });
+    }
+});
+
+// Endpoint: Excluir um comentário
+// Adicione 'protect'
+app.delete('/api/comentarios/:id', protect, async (req, res) => { // <-- AQUI!
+    try {
+        const { id } = req.params;
+        const usuario_logado_id = req.usuario.id; // ID do usuário que está tentando deletar
+        
+        // 1. Verifica se o usuário logado é o autor do comentário
+        const [rows] = await pool.execute(
+            "SELECT usuario_id FROM comentarios WHERE id = ?", 
+            [id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Comentário não encontrado.' });
+        }
+
+        const autor_comentario_id = rows[0].usuario_id;
+        
+        // **LÓGICA DE AUTORIZAÇÃO**
+        if (autor_comentario_id !== usuario_logado_id) {
+            // Você também pode adicionar uma checagem de role se tiver 'admin'
+            return res.status(403).json({ message: 'Você não tem permissão para excluir este comentário.' });
+        }
+        
+        // 2. Se a permissão for concedida, executa a exclusão
+        const query = 'DELETE FROM comentarios WHERE id = ?';
+        const [result] = await pool.execute(query, [id]);
+
+        // O 204 é retornado se a exclusão for bem-sucedida
+        res.status(204).send(); 
+
+    } catch (error) {
+        console.error('Erro ao excluir o comentário:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao excluir o comentário.' });
     }
 });
 
