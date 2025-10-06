@@ -24,7 +24,7 @@ const StarRating = ({ rating, setRating }) => {
                 );
             })}
         </div>
-    );
+    );  
 };
 
 
@@ -50,20 +50,28 @@ const BookDetailPage = ({ openAuthModal }) => {
 
     // NOVO ESTADO para controlar o modal de exclusão
     const [commentToDelete, setCommentToDelete] = useState(null);
-    
+
+    // --- Estados de Curtidas ---
+    const [likes, setLikes] = useState(0);
+    const [userLiked, setUserLiked] = useState(false);
+
     const fetchBookDetails = async () => {
         try {
             setLoading(true);
             setError('');
-            
-            const [bookRes, commentsRes, ratingRes] = await Promise.all([
+
+            // Monta headers opcionais para enviar token quando houver
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+            const [bookRes, commentsRes, ratingRes, likesRes] = await Promise.all([
                 axios.get(`http://localhost:3001/api/books/${id}`),
                 axios.get(`http://localhost:3001/api/books/${id}/comments`),
-                axios.get(`http://localhost:3001/api/books/${id}/rating`)
+                axios.get(`http://localhost:3001/api/books/${id}/rating`),
+                axios.get(`http://localhost:3001/api/books/${id}/likes`, { headers })
             ]);
-            
+
             setBook(bookRes.data);
-            
+
             const fetchedComments = commentsRes.data;
             if (user) {
                 let userComment = null;
@@ -74,7 +82,7 @@ const BookDetailPage = ({ openAuthModal }) => {
                     }
                     return true;
                 });
-                
+
                 if (userComment) {
                     setUserHasReviewed(true);
                     setComments([userComment, ...otherComments]);
@@ -86,10 +94,16 @@ const BookDetailPage = ({ openAuthModal }) => {
                 setComments(fetchedComments);
             }
 
-            if (ratingRes.data && ratingRes.data.media_avaliacoes) {
+            if (ratingRes.data && ratingRes.data.media_avaliacoes !== undefined) {
                 setRating(ratingRes.data);
             }
-            
+
+            // Curtidas: atualiza contagem e se o usuário atual já curtiu
+            if (likesRes && likesRes.data) {
+                setLikes(likesRes.data.totalCurtidas || 0);
+                setUserLiked(!!likesRes.data.userLiked);
+            }
+
         } catch (err) {
             setError('Erro ao carregar os detalhes do livro.');
             console.error("Detalhes do erro:", err);
@@ -102,7 +116,7 @@ const BookDetailPage = ({ openAuthModal }) => {
         // A verificação 'user?.id' garante que o user não é nulo antes de acessar o id
         fetchBookDetails();
     }, [id, user?.id]);
-    
+
     const handleSubmitReview = async (e) => {
         e.preventDefault();
         if (newRating === 0 || newComment.trim() === '') {
@@ -116,7 +130,7 @@ const BookDetailPage = ({ openAuthModal }) => {
                 { texto: newComment, nota: newRating },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            
+
             setNewComment('');
             setNewRating(0);
             fetchBookDetails(); // Recarrega todos os dados para ter a visão mais atual
@@ -133,6 +147,30 @@ const BookDetailPage = ({ openAuthModal }) => {
         }
     };
 
+    // --- Função de Curtir / Descurtir ---
+    const handleLike = async () => {
+        if (!token) {
+            openAuthModal('login');
+            return;
+        }
+
+        try {
+            const response = await axios.post(
+                `http://localhost:3001/api/books/${id}/like`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Atualiza estados baseado na resposta
+            setUserLiked(response.data.liked);
+            // Recarrega contagem e comentários/avaliações atualizadas
+            fetchBookDetails();
+        } catch (err) {
+            console.error('Erro ao curtir livro:', err);
+            alert('Não foi possível curtir o livro.');
+        }
+    };
+
     if (loading) return <p>Carregando...</p>;
     if (error) return <p>{error}</p>;
     if (!book) return <p>Livro não encontrado.</p>;
@@ -141,7 +179,7 @@ const BookDetailPage = ({ openAuthModal }) => {
     const averageRating = rating.total_avaliacoes > 0 
         ? parseFloat(rating.media_avaliacoes).toFixed(1) 
         : '0.0';
-    
+
     const userCommentStyle = {
         border: '1px solid var(--primary-blue)',
         backgroundColor: 'rgba(0, 123, 255, 0.05)',
@@ -178,7 +216,7 @@ const BookDetailPage = ({ openAuthModal }) => {
             alert("Não foi possível atualizar sua avaliação.");
         }
     };
-    
+
     const handleDeleteClick = (commentId) => {
         setCommentToDelete(commentId);
     };
@@ -213,7 +251,9 @@ const BookDetailPage = ({ openAuthModal }) => {
                     </div>
                 )}
                 <p>{book.sinopse}</p>
-                <button onClick={handleActionWithoutAuth} className="like-button">❤️ Curtir Livro</button>
+                <button onClick={handleLike} className="like-button">
+                    {userLiked ? '💔 Remover Curtida' : '❤️ Curtir Livro'} ({likes})
+                </button>
             </div>
 
             <div className="book-reviews">
@@ -243,10 +283,10 @@ const BookDetailPage = ({ openAuthModal }) => {
                         <button onClick={() => openAuthModal('login')}>Entrar</button>
                     </div>
                 )}
-                
+
                 {comments.map(comment => (
                      <div key={comment.id} className="comment" style={user && comment.usuario_id === user.id ? userCommentStyle : {}}>
-                        
+
                         {/* MODO DE EDIÇÃO */}
                         {editingCommentId === comment.id ? (
                             <form onSubmit={handleUpdateReview} className="edit-form">
@@ -273,7 +313,7 @@ const BookDetailPage = ({ openAuthModal }) => {
                                 <p>{comment.texto}</p>
                                 <div className="comment-actions">
                                     <button>👍 {comment.curtidas}</button>
-                                    
+
                                     {user && user.id === comment.usuario_id && (
                                         <>
                                             {/* Adicione as classes aqui */}

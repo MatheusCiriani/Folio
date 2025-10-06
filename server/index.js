@@ -1,4 +1,3 @@
-// server/index.js
 require('dotenv').config(); // Carrega as variáveis do arquivo .env
 
 // --- Importações ---
@@ -26,28 +25,29 @@ app.use(express.json()); // Habilita o parsing de JSON no corpo das requisiçõe
 //     try {
 //         const adminEmail = process.env.ADMIN_EMAIL;
 //         const [rows] = await pool.execute("SELECT * FROM users WHERE email = ?", [adminEmail]);
-        
+
 //         if (rows.length === 0) {
 //             console.log(`Nenhum usuário admin encontrado. Criando admin com email: ${adminEmail}`);
 //             const adminNome = process.env.ADMIN_NOME;
 //             const adminPassword = process.env.ADMIN_PASSWORD;
-            
+
 //             const hashedPassword = await bcrypt.hash(adminPassword, 10);
-            
+
 //             await pool.execute(
 //                 "INSERT INTO users (nome, email, password, role) VALUES (?, ?, ?, ?)",
 //                 [adminNome, adminEmail, hashedPassword, 'admin']
 //             );
 //             console.log('✅ Usuário admin criado com sucesso!');
 //         } else {
-//             console.log('Usuário admin já existe.');
-//         }
+//             console.log('Usuário admin já existe.' );
+//        }
 //     } catch (error) {
 //         console.error('❌ Erro ao criar usuário admin:', error);
 //     }
 // };
 
-// NOVA ROTA: Buscar todos os livros
+
+// --- ROTA: Buscar todos os livros
 // Método: GET
 // URL: /api/books
 app.get('/api/books', async (req, res) => {
@@ -152,13 +152,13 @@ app.put('/api/books/:id', authMiddleware, adminMiddleware, upload.single('capa')
     try {
         const { id } = req.params;
         const { titulo, autor, sinopse } = req.body;
-        
+
         // 1. Verifica se o livro existe
         const [rows] = await pool.execute("SELECT capa FROM livros WHERE id = ?", [id]);
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Livro não encontrado' });
         }
-        
+
         const oldCapaPath = rows[0].capa;
         let capaPath = oldCapaPath; // Mantém a capa antiga por padrão
 
@@ -176,7 +176,7 @@ app.put('/api/books/:id', authMiddleware, adminMiddleware, upload.single('capa')
             "UPDATE livros SET titulo = ?, autor = ?, sinopse = ?, capa = ? WHERE id = ?",
             [titulo, autor, sinopse, capaPath, id]
         );
-        
+
         res.status(200).json({
             id: parseInt(id),
             titulo,
@@ -195,7 +195,7 @@ app.put('/api/books/:id', authMiddleware, adminMiddleware, upload.single('capa')
 app.post('/api/register', async (req, res) => {
     try {
         const { nome, email, senha } = req.body;
-        
+
         // 1. Validação dos campos
         if (!nome || !email || !senha) {
             return res.status(400).json({ message: "Por favor, preencha todos os campos." });
@@ -226,7 +226,7 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { email, senha } = req.body;
-        
+
         // 1. Validação dos campos
         if (!email || !senha) {
             return res.status(400).json({ message: "Por favor, preencha e-mail e senha." });
@@ -356,7 +356,7 @@ app.delete('/api/comments/:commentId', authMiddleware, async (req, res) => {
         if (comentario.usuario_id !== usuario_id) {
             return res.status(403).json({ message: 'Acesso negado.' });
         }
-        
+
         // IMPORTANTE: Primeiro deletamos a avaliação, depois o comentário.
         // Se o comentário for deletado primeiro, perdemos a referência para deletar a avaliação.
         await pool.execute(
@@ -430,11 +430,73 @@ app.post('/api/books/:id/review', authMiddleware, async (req, res) => {
     }
 });
 
+// --- ROTAS DE CURTIDAS ---
+// Curtir ou descurtir um livro
+app.post('/api/books/:id/like', authMiddleware, async (req, res) => {
+    try {
+        const { id: livro_id } = req.params;
+        const { id: usuario_id } = req.user;
+
+        // Verifica se o usuário já curtiu o livro
+        const [rows] = await pool.execute(
+            'SELECT * FROM curtidas WHERE usuario_id = ? AND livro_id = ?',
+            [usuario_id, livro_id]
+        );
+
+        if (rows.length > 0) {
+            // Já curtiu -> remove (descurte)
+            await pool.execute('DELETE FROM curtidas WHERE usuario_id = ? AND livro_id = ?', [usuario_id, livro_id]);
+            return res.status(200).json({ liked: false, message: 'Curtida removida.' });
+        } else {
+            // Não curtiu -> insere
+            await pool.execute('INSERT INTO curtidas (usuario_id, livro_id) VALUES (?, ?)', [usuario_id, livro_id]);
+            return res.status(201).json({ liked: true, message: 'Livro curtido com sucesso!' });
+        }
+    } catch (error) {
+        console.error('Erro ao curtir livro:', error);
+        res.status(500).json({ message: 'Erro interno ao curtir livro.' });
+    }
+});
+
+// Obter total de curtidas de um livro (retorna também se o usuário atual curtiu, caso envie token)
+app.get('/api/books/:id/likes', async (req, res) => {
+    try {
+        const { id: livro_id } = req.params;
+
+        const [countRows] = await pool.execute(
+            'SELECT COUNT(*) AS totalCurtidas FROM curtidas WHERE livro_id = ?',
+            [livro_id]
+        );
+
+        let userLiked = false;
+        const authHeader = req.headers.authorization || '';
+        if (authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const userId = decoded.id;
+                const [userRows] = await pool.execute(
+                    'SELECT COUNT(*) as hasLiked FROM curtidas WHERE livro_id = ? AND usuario_id = ?',
+                    [livro_id, userId]
+                );
+                userLiked = userRows[0].hasLiked > 0;
+            } catch (err) {
+                // token inválido -> ignorar e retornar apenas o total
+                console.warn('Token inválido ao verificar curtida do usuário.');
+            }
+        }
+
+        res.status(200).json({
+            totalCurtidas: countRows[0].totalCurtidas,
+            userLiked
+        });
+    } catch (error) {
+        console.error('Erro ao buscar curtidas:', error);
+        res.status(500).json({ message: 'Erro interno ao buscar curtidas.' });
+    }
+});
+
 // ... (resto do arquivo)
-
-
-// ... (resto do seu arquivo)
-
 
 // --- Iniciar o Servidor ---
 app.listen(PORT, async () => {
