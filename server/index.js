@@ -457,6 +457,69 @@ app.post('/api/books/:id/like', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Erro interno ao curtir livro.' });
     }
 });
+// Curtir ou descurtir um comentário
+app.post('/api/comments/:id/like', authMiddleware, async (req, res) => {
+    try {
+        const { id: comentario_id } = req.params;
+        const { id: usuario_id } = req.user;
+
+        // Verifica se o usuário já curtiu o comentário
+        const [rows] = await pool.execute(
+            'SELECT * FROM curtidas WHERE usuario_id = ? AND comentario_id = ?',
+            [usuario_id, comentario_id]
+        );
+
+        if (rows.length > 0) {
+            // Já curtiu -> remove
+            await pool.execute('DELETE FROM curtidas WHERE usuario_id = ? AND comentario_id = ?', [usuario_id, comentario_id]);
+            return res.status(200).json({ liked: false, message: 'Curtida removida.' });
+        } else {
+            // Ainda não curtiu -> insere
+            await pool.execute('INSERT INTO curtidas (usuario_id, comentario_id) VALUES (?, ?)', [usuario_id, comentario_id]);
+            return res.status(201).json({ liked: true, message: 'Comentário curtido com sucesso!' });
+        }
+    } catch (error) {
+        console.error('Erro ao curtir comentário:', error);
+        res.status(500).json({ message: 'Erro interno ao curtir comentário.' });
+    }
+});
+
+// Obter total de curtidas de um comentário
+app.get('/api/comments/:id/likes', async (req, res) => {
+    try {
+        const { id: comentario_id } = req.params;
+
+        const [countRows] = await pool.execute(
+            'SELECT COUNT(*) AS totalCurtidas FROM curtidas WHERE comentario_id = ?',
+            [comentario_id]
+        );
+
+        let userLiked = false;
+        const authHeader = req.headers.authorization || '';
+        if (authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                const userId = decoded.id;
+                const [userRows] = await pool.execute(
+                    'SELECT COUNT(*) as hasLiked FROM curtidas WHERE comentario_id = ? AND usuario_id = ?',
+                    [comentario_id, userId]
+                );
+                userLiked = userRows[0].hasLiked > 0;
+            } catch {
+                // token inválido ou expirado → ignora
+            }
+        }
+
+        res.status(200).json({
+            totalCurtidas: countRows[0].totalCurtidas,
+            userLiked
+        });
+    } catch (error) {
+        console.error('Erro ao buscar curtidas de comentário:', error);
+        res.status(500).json({ message: 'Erro interno ao buscar curtidas.' });
+    }
+});
 
 // Obter total de curtidas de um livro (retorna também se o usuário atual curtiu, caso envie token)
 app.get('/api/books/:id/likes', async (req, res) => {

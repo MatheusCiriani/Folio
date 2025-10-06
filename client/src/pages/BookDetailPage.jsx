@@ -24,7 +24,7 @@ const StarRating = ({ rating, setRating }) => {
                 );
             })}
         </div>
-    );  
+    );
 };
 
 
@@ -126,7 +126,7 @@ const BookDetailPage = ({ openAuthModal }) => {
 
         try {
             await axios.post(
-                `http://localhost:3001/api/books/${id}/review`, 
+                `http://localhost:3001/api/books/${id}/review`,
                 { texto: newComment, nota: newRating },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -171,13 +171,36 @@ const BookDetailPage = ({ openAuthModal }) => {
         }
     };
 
+    // --- Curtir / Descurtir comentário ---
+    const handleCommentLike = async (commentId) => {
+        if (!token) {
+            openAuthModal('login');
+            return;
+        }
+
+        try {
+            await axios.post(
+                `http://localhost:3001/api/comments/${commentId}/like`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Atualiza os comentários e suas curtidas
+            fetchBookDetails();
+        } catch (err) {
+            console.error('Erro ao curtir comentário:', err);
+            alert('Não foi possível curtir o comentário.');
+        }
+    };
+
+
     if (loading) return <p>Carregando...</p>;
     if (error) return <p>{error}</p>;
     if (!book) return <p>Livro não encontrado.</p>;
 
     const coverImageUrl = book.capa ? `http://localhost:3001/${book.capa}` : 'caminho/para/imagem/padrao.jpg';
-    const averageRating = rating.total_avaliacoes > 0 
-        ? parseFloat(rating.media_avaliacoes).toFixed(1) 
+    const averageRating = rating.total_avaliacoes > 0
+        ? parseFloat(rating.media_avaliacoes).toFixed(1)
         : '0.0';
 
     const userCommentStyle = {
@@ -273,7 +296,7 @@ const BookDetailPage = ({ openAuthModal }) => {
                     </form>
                 )}
                 {token && userHasReviewed && (
-                     <div className="login-prompt">
+                    <div className="login-prompt">
                         <p>Sua avaliação já foi registrada para este livro.</p>
                     </div>
                 )}
@@ -285,16 +308,16 @@ const BookDetailPage = ({ openAuthModal }) => {
                 )}
 
                 {comments.map(comment => (
-                     <div key={comment.id} className="comment" style={user && comment.usuario_id === user.id ? userCommentStyle : {}}>
+                    <div key={comment.id} className="comment" style={user && comment.usuario_id === user.id ? userCommentStyle : {}}>
 
                         {/* MODO DE EDIÇÃO */}
                         {editingCommentId === comment.id ? (
                             <form onSubmit={handleUpdateReview} className="edit-form">
                                 <StarRating rating={editRating} setRating={setEditRating} />
-                                <textarea 
-                                    value={editText} 
-                                    onChange={(e) => setEditText(e.target.value)} 
-                                    required 
+                                <textarea
+                                    value={editText}
+                                    onChange={(e) => setEditText(e.target.value)}
+                                    required
                                 />
                                 <div className="comment-actions">
                                     <button type="submit">Salvar</button>
@@ -312,7 +335,12 @@ const BookDetailPage = ({ openAuthModal }) => {
                                 </div>
                                 <p>{comment.texto}</p>
                                 <div className="comment-actions">
-                                    <button>👍 {comment.curtidas}</button>
+                                    <button
+                                        onClick={() => handleCommentLike(comment.id)}
+                                        className={comment.userLiked ? 'liked' : ''}>
+                                        👍 {comment.curtidas}
+                                    </button>
+
 
                                     {user && user.id === comment.usuario_id && (
                                         <>

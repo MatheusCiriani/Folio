@@ -573,3 +573,6 @@ main {
 .btn-edit-card:hover {
     background-color: #e4e6eb;
 }
+.like-button.liked {
+  color: red;
+}
