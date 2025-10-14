@@ -484,6 +484,164 @@ app.post('/api/comments/:id/like', authMiddleware, async (req, res) => {
     }
 });
 
+// --- NOVAS ROTAS: SEGUIR USUÁRIO (FOLLOW) ---
+
+// Rota para um usuário logado começar a seguir outro usuário
+// Método: POST
+// URL: /api/users/:followingId/follow
+app.post('/api/users/:followingId/follow', authMiddleware, async (req, res) => {
+    try {
+        // Pega o ID do usuário logado (o seguidor) a partir do middleware
+        const followerId = req.user.id; 
+        // Pega o ID do usuário a ser seguido a partir dos parâmetros da URL
+        const { followingId } = req.params; 
+
+        // 1. Validação: Não pode seguir a si mesmo
+        if (parseInt(followerId) === parseInt(followingId)) {
+            return res.status(400).json({ message: "Você não pode seguir a si mesmo." });
+        }
+        
+        // 2. Validação: Checar se o usuário a ser seguido existe (melhora a experiência de erro)
+        const [userRows] = await pool.execute('SELECT id FROM usuarios WHERE id = ?', [followingId]);
+        if (userRows.length === 0) {
+            return res.status(404).json({ message: "Usuário a ser seguido não encontrado." });
+        }
+
+        // 3. Verifica se o follow já existe
+        const [followRows] = await pool.execute(
+            'SELECT * FROM seguir WHERE usuario_id_seguidor = ? AND usuario_id_seguido = ?',
+            [followerId, followingId]
+        );
+
+        if (followRows.length > 0) {
+            return res.status(409).json({ message: "Você já segue este usuário." });
+        }
+
+        // 4. Cria o registro de follow na nova tabela 'seguir'
+        await pool.execute(
+            'INSERT INTO seguir (usuario_id_seguidor, usuario_id_seguido) VALUES (?, ?)',
+            [followerId, followingId]
+        );
+
+        res.status(201).json({ message: "Usuário seguido com sucesso!" });
+
+    } catch (error) {
+        console.error('Erro ao seguir usuário:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao seguir usuário.' });
+    }
+});
+
+// Rota para um usuário logado parar de seguir outro usuário
+// Método: DELETE
+// URL: /api/users/:followingId/follow
+app.delete('/api/users/:followingId/follow', authMiddleware, async (req, res) => {
+    try {
+        const followerId = req.user.id; // ID do usuário logado (o seguidor)
+        const { followingId } = req.params; // ID do usuário a ser deixado de seguir
+
+        // 1. Tenta deletar o registro de follow
+        const [result] = await pool.execute(
+            'DELETE FROM seguir WHERE usuario_id_seguidor = ? AND usuario_id_seguido = ?',
+            [followerId, followingId]
+        );
+
+        // 2. Verifica se algum registro foi deletado
+        if (result.affectedRows === 0) {
+            // Retorna 404 se a relação não existia para ser deletada
+            return res.status(404).json({ message: "Você não seguia este usuário." });
+        }
+
+        res.status(200).json({ message: "Usuário deixado de seguir com sucesso." });
+
+    } catch (error) {
+        console.error('Erro ao deixar de seguir usuário:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao deixar de seguir usuário.' });
+    }
+});
+
+// --- NOVAS ROTAS: INDICAÇÃO DE LIVROS ---
+
+// Rota para um usuário logado indicar um livro para outro usuário
+// Método: POST
+// URL: /api/recommendations
+app.post('/api/recommendations', authMiddleware, async (req, res) => {
+    try {
+        const usuario_origem_id = req.user.id; // Usuário logado é quem envia a indicação
+        
+        // Dados esperados no corpo da requisição (req.body):
+        const { livro_id, usuario_destino_id } = req.body; 
+
+        // 1. Validação: Campos obrigatórios
+        if (!livro_id || !usuario_destino_id) {
+            return res.status(400).json({ message: "O ID do livro e o ID do destinatário são obrigatórios." });
+        }
+
+        // 2. Validação: Não pode indicar para si mesmo
+        if (parseInt(usuario_origem_id) === parseInt(usuario_destino_id)) {
+            return res.status(400).json({ message: "Você não pode indicar um livro para si mesmo." });
+        }
+        
+        // 3. (Opcional, mas recomendado) Verificar se o livro e o usuário destino existem
+        const [livroRows] = await pool.execute('SELECT id FROM livros WHERE id = ?', [livro_id]);
+        if (livroRows.length === 0) {
+            return res.status(404).json({ message: "Livro não encontrado." });
+        }
+
+        const [destinoRows] = await pool.execute('SELECT id FROM usuarios WHERE id = ?', [usuario_destino_id]);
+        if (destinoRows.length === 0) {
+            return res.status(404).json({ message: "Usuário destinatário não encontrado." });
+        }
+
+        // 4. Inserir a indicação na tabela 'indicacoes'
+        const [result] = await pool.execute(
+            'INSERT INTO indicacoes (livro_id, usuario_origem_id, usuario_destino_id) VALUES (?, ?, ?)',
+            [livro_id, usuario_origem_id, usuario_destino_id]
+        );
+
+        res.status(201).json({ 
+            message: "Livro indicado com sucesso!",
+            id: result.insertId 
+        });
+
+    } catch (error) {
+        console.error('Erro ao enviar indicação:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao enviar indicação.' });
+    }
+});
+
+// Rota para listar as indicações de livros recebidas pelo usuário logado
+// Método: GET
+// URL: /api/recommendations/received
+app.get('/api/recommendations/received', authMiddleware, async (req, res) => {
+    try {
+        const usuario_destino_id = req.user.id; // Usuário logado é o destinatário
+
+        // 1. Busca as indicações recebidas, fazendo JOIN com as tabelas de livros e usuários
+        const [rows] = await pool.execute(
+            `SELECT 
+                i.id AS indicacao_id, 
+                i.criado_em,
+                l.id AS livro_id, 
+                l.titulo AS livro_titulo,
+                l.autor AS livro_autor,
+                u.id AS origem_id,
+                u.nome AS origem_nome
+             FROM indicacoes i
+             JOIN livros l ON i.livro_id = l.id
+             JOIN usuarios u ON i.usuario_origem_id = u.id
+             WHERE i.usuario_destino_id = ?
+             ORDER BY i.criado_em DESC`,
+            [usuario_destino_id]
+        );
+
+        res.status(200).json(rows);
+
+    } catch (error) {
+        console.error('Erro ao buscar indicações recebidas:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao buscar indicações.' });
+    }
+});
+
 // Obter total de curtidas de um comentário
 app.get('/api/comments/:id/likes', async (req, res) => {
     try {
