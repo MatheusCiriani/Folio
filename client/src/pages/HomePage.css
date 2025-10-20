@@ -1,0 +1,56 @@
+/* --- Estilos da HomePage (de App.css) --- */
+.homepage-container { text-align: center; }
+
+.search-bar { margin: 2rem 0; }
+.search-bar input {
+  width: 100%;
+  max-width: 500px;
+  padding: 0.8rem;
+  font-size: 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--input-border);
+}
+
+.book-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem;
+  text-align: left;
+  margin-top: 2rem;
+}
+
+.book-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.book-card:hover { transform: translateY(-5px); }
+
+.book-card img {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+}
+.book-card h3, .book-card p { padding: 0.5rem 1rem; }
+.book-card h3 { font-size: 1.1rem; }
+.book-card p { color: #666; padding-bottom: 1rem; }
+
+/* Botão de Editar no Card (de App.css) */
+.admin-actions {
+    padding: 0 1rem 1rem 1rem;
+}
+.btn-edit-card {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background-color: #f0f2f5;
+    padding: 0.5rem;
+    border-radius: 6px;
+    color: #333;
+    font-weight: 500;
+}
+.btn-edit-card:hover {
+    background-color: #e4e6eb;
+}

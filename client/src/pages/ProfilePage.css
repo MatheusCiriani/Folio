@@ -1,0 +1,60 @@
+.profile-page-container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* Estilos para a lista de "Seguindo" */
+.following-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+}
+
+.following-item {
+    cursor: pointer;
+    padding: 10px 15px;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.following-item:hover {
+    background-color: #f9f9f9;
+    border-color: var(--primary-blue);
+}
+
+/* --- Estilos do Book List (copiado de HomePage.css) --- */
+/* (Necessário para a lista de "Livros Curtidos") */
+.book-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Um pouco menor para o perfil */
+  gap: 1.5rem;
+  text-align: left;
+  margin-top: 2rem;
+}
+
+.book-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+.book-card:hover { transform: translateY(-5px); }
+
+.book-card img {
+  width: 100%;
+  height: 250px; /* Altura um pouco menor */
+  object-fit: cover;
+}
+.book-card h3 { 
+    padding: 0.5rem 1rem;
+    font-size: 1rem; 
+}
+.book-card p { 
+    color: #666; 
+    padding: 0 1rem 1rem 1rem;
+    font-size: 0.9rem;
+}
