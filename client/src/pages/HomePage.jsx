@@ -63,7 +63,14 @@ const HomePage = () => {
                                 <p>{book.autor}</p>
                            </Link>
 
-                           {user?.email === 'admin@admin.com' && (
+                           {/* {user?.email === 'admin@admin.com' && (
+                                <div className="admin-actions">
+                                    <Link to={`/admin/edit-book/${book.id}`} className="btn-edit-card">
+                                        Editar
+                                    </Link>
+                                </div>
+                            )} */}
+                           {user && (
                                 <div className="admin-actions">
                                     <Link to={`/admin/edit-book/${book.id}`} className="btn-edit-card">
                                         Editar

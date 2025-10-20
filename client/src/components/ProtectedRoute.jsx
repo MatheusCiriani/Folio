@@ -5,11 +5,14 @@ const ProtectedRoute = () => {
     // Pega os dados do usuário do localStorage
     const user = JSON.parse(localStorage.getItem('usuarios'));
 
-    // Verifica se o usuário está logado E se a role dele é 'admin'
-    const isAdmin = user && user?.email === 'admin@admin.com';
+    // ATUALIZADO: Verifica se o usuário está logado E se a role dele é 'admin'
+    // const isAdmin = user && user?.email === 'admin@admin.com' ;
+
+    // Agora, apenas verifica se está logado:
+    const isLoggedIn = user ? true : false;
 
     // Se for admin, permite o acesso à rota. Se não, redireciona para a home.
-    return isAdmin ? <Outlet /> : <Navigate to="/" />;
+    return isLoggedIn ? <Outlet /> : <Navigate to="/" />;
 };
 
 export default ProtectedRoute;
