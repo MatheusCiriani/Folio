@@ -1,0 +1,208 @@
+/* --- Estilos da Página de Detalhes (de App.css) --- */
+.book-detail-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 3rem;
+    margin-top: 2rem;
+    align-items: flex-start;
+}
+
+.book-info {
+    background-color: var(--container-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.book-cover-large {
+    width: 100%;
+    max-width: 300px;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.book-info h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+.book-info h2 { font-size: 1.2rem; color: #666; font-weight: 400; margin-bottom: 1rem; }
+.book-info .rating { margin-bottom: 1rem; }
+.book-info p { text-align: justify; line-height: 1.6; color: #555; }
+
+.like-button {
+    margin-top: 1.5rem;
+    background-color: #f0f0f0;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+}
+.like-button.liked {
+  color: red;
+}
+
+.book-reviews {
+    background-color: var(--container-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* --- Formulário de Avaliação (de App.css) --- */
+.review-form {
+    margin-top: 1.5rem;
+    border-top: 1px solid #eee;
+    padding-top: 1.5rem;
+    margin-bottom: 2rem;
+}
+.review-form h4 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.star-rating {
+    margin-bottom: 1rem;
+}
+.star-rating .star {
+    font-size: 2rem;
+    cursor: pointer;
+    color: #ddd;
+    transition: color 0.2s;
+}
+.star-rating .star.selected,
+.star-rating .star:hover {
+    color: #f5c518;
+}
+
+.review-form textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 15px;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    resize: vertical;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.review-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.review-form .submit-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--primary-blue);
+  color: var(--light-text);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.review-form .submit-btn:hover {
+  background-color: #0056b3;
+}
+
+/* --- Seção de Comentários (de App.css) --- */
+.comment {
+    border-top: 1px solid #eee;
+    padding: 1.5rem 0;
+}
+.comment:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+.comment-header strong {
+    font-size: 1rem;
+}
+.comment-stars {
+    margin-left: 0.75rem;
+    font-size: 0.9rem;
+}
+.comment p {
+    color: #444;
+    line-height: 1.6;
+}
+
+.comment-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.comment-actions button {
+    background-color: #f0f2f5;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #333;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+.comment-actions button:hover {
+    background-color: #e4e6eb;
+}
+
+.btn-edit {
+    color: var(--primary-blue) !important;
+    background-color: rgba(0, 123, 255, 0.1) !important;
+}
+.btn-edit:hover {
+    background-color: rgba(0, 123, 255, 0.2) !important;
+}
+
+.btn-delete {
+    color: var(--error-color) !important;
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
+.btn-delete:hover {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+}
+
+.edit-form {
+    margin-top: 1rem;
+}
+.edit-form textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px 15px;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    resize: vertical;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.edit-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+.edit-form .comment-actions button {
+    background-color: var(--primary-blue);
+    color: white;
+}
+.edit-form .comment-actions button:hover {
+    background-color: #0056b3;
+}
+.edit-form .btn-cancel {
+    background-color: #f0f2f5;
+    color: #333;
+}
+.edit-form .btn-cancel:hover {
+    background-color: #e4e6eb;
+}

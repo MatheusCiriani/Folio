@@ -10,6 +10,7 @@ import AddBookPage from './pages/AddBookPage';
 import EditBookPage from './pages/EditBookPage';
 
 import ProtectedRoute from './components/ProtectedRoute'; // <<< IMPORTE A ROTA PROTEGIDA
+import ProfilePage from './pages/ProfilePage'; // <<< IMPORTE A NOVA PÁGINA
 
 
 import './App.css';
@@ -38,18 +39,18 @@ function App() {
         
         <main>
           <Routes>
-            {/* Rotas Públicas */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/book/:id" element={<BookDetailPage openAuthModal={openAuthModal} />} />
-            
-            {/* Rotas de Admin Protegidas */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/admin/add-book" element={<AddBookPage />} />
-              <Route path="/admin/edit-book/:id" element={<EditBookPage />} />
-            </Route>
-
+              {/* Rotas Públicas */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/book/:id" element={<BookDetailPage openAuthModal={openAuthModal} />} />
+              
+              {/* Rotas Protegidas (qualquer usuário logado) */}
+              <Route element={<ProtectedRoute />}>
+                  <Route path="/admin/add-book" element={<AddBookPage />} />
+                  <Route path="/admin/edit-book/:id" element={<EditBookPage />} />
+                  <Route path="/profile" element={<ProfilePage />} /> {/* <<< ADICIONE ESTA ROTA */}
+              </Route>
           </Routes>
-        </main>
+      </main>
 
         {authModal.isOpen && (
           <AuthModal

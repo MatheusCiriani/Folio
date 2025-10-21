@@ -1,0 +1,52 @@
+/* --- ESTILOS PARA O MODAL DE CONFIRMAÇÃO (de App.css) --- */
+.confirm-modal {
+    max-width: 450px;
+    padding: 30px;
+}
+
+.confirm-modal .modal-header {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.confirm-modal .modal-body {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.confirm-modal .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.confirm-modal .modal-footer button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+/* Botão secundário (Cancelar) */
+.btn-secondary {
+    background-color: #f0f2f5;
+    color: #333;
+}
+.btn-secondary:hover {
+    background-color: #e4e6eb;
+}
+
+/* Botão de perigo (Confirmar Exclusão) */
+.btn-danger {
+    background-color: var(--error-color);
+    color: white;
+}
+.btn-danger:hover {
+    background-color: #c82333;
+}

@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import ConfirmModal from '../components/ConfirmModal'; // <<< IMPORTE O NOVO COMPONENTE
+import UserProfileModal from '../components/UserProfileModal';
+import './BookDetailPage.css';
 
 // Componente para as estrelas
 const StarRating = ({ rating, setRating }) => {
@@ -54,8 +56,9 @@ const BookDetailPage = ({ openAuthModal }) => {
     // --- Estados de Curtidas ---
     const [likes, setLikes] = useState(0);
     const [userLiked, setUserLiked] = useState(false);
+    const [viewingProfileId, setViewingProfileId] = useState(null);
 
-    const fetchBookDetails = async () => {
+    const fetchBookDetails = useCallback(async () => {
         try {
             setLoading(true);
             setError('');
@@ -110,7 +113,7 @@ const BookDetailPage = ({ openAuthModal }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id, token, user]);
 
     useEffect(() => {
         // A verificação 'user?.id' garante que o user não é nulo antes de acessar o id
@@ -138,12 +141,6 @@ const BookDetailPage = ({ openAuthModal }) => {
         } catch (err) {
             console.error("Erro ao enviar avaliação:", err);
             alert(err.response?.data?.message || "Não foi possível enviar sua avaliação.");
-        }
-    };
-
-    const handleActionWithoutAuth = () => {
-        if (!token) {
-            openAuthModal('login');
         }
     };
 
@@ -328,7 +325,13 @@ const BookDetailPage = ({ openAuthModal }) => {
                             /* MODO DE VISUALIZAÇÃO (NORMAL) */
                             <>
                                 <div className="comment-header">
-                                    <strong>{comment.usuario_nome}</strong>
+                                    {/* 3. TRANSFORME O NOME EM UM BOTÃO */}
+                                    <strong 
+                                        className="comment-author-name" 
+                                        onClick={() => setViewingProfileId(comment.usuario_id)}
+                                    >
+                                        {comment.usuario_nome}
+                                    </strong>
                                     {comment.nota > 0 && (
                                         <span className="comment-stars">{'⭐'.repeat(comment.nota)}</span>
                                     )}
@@ -355,6 +358,15 @@ const BookDetailPage = ({ openAuthModal }) => {
                     </div>
                 ))}
             </div>
+
+            {/* 4. ADICIONE O MODAL NO FINAL DO RETURN */}
+            {viewingProfileId && (
+                <UserProfileModal
+                    userId={viewingProfileId}
+                    closeModal={() => setViewingProfileId(null)}
+                />
+            )}
+
             {/* --- MODAL DE CONFIRMAÇÃO --- */}
             <ConfirmModal
                 isOpen={commentToDelete !== null}
