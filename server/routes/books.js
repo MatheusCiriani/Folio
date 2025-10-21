@@ -1,13 +1,13 @@
 const express = require('express');
 const pool = require('../db');
 const fs = require('fs');
+const jwt = require('jsonwebtoken'); // <<< ADICIONE ESTA LINHA
 const { authMiddleware, adminMiddleware } = require('../authMiddleware');
 const { upload } = require('../config/multer'); // Importa o multer configurado
 
 const router = express.Router();
 
-// --- ROTA: Buscar todos os livros
-// GET /api/books -> GET /
+// --- ROTA: Buscar todos os livros (Sem alteração) ---
 router.get('/', async (req, res) => {
     try {
         const [rows] = await pool.execute("SELECT * FROM livros ORDER BY titulo ASC");
@@ -18,41 +18,51 @@ router.get('/', async (req, res) => {
     }
 });
 
-// --- ROTA: Buscar um livro pelo ID
-// GET /api/books/:id -> GET /:id
+// --- ROTA: Buscar um livro pelo ID (Sem alteração) ---
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const [rows] = await pool.execute("SELECT * FROM livros WHERE id = ?", [id]);
+
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Livro não encontrado' });
         }
-        res.status(200).json(rows[0]);
+        
+        // Esta é a linha que estava faltando ou quebrada
+        res.status(200).json(rows[0]); 
+
     } catch (error) {
         console.error('Erro ao buscar o livro:', error);
         res.status(500).json({ message: 'Erro interno do servidor' });
     }
 });
 
-// --- ROTA: Criar um novo livro
+// --- ROTA: Criar um novo livro (MODIFICADA) ---
 // POST /api/books -> POST /
-router.post('/', authMiddleware, upload.single('capa'), async (req, res) => {
+// 1. Removemos o middleware 'upload.single('capa')'
+router.post('/', authMiddleware, async (req, res) => {
     try {
-        const { titulo, autor, sinopse } = req.body;
+        // 2. Adicionamos 'capa' à desestruturação do req.body
+        const { titulo, autor, sinopse, capa } = req.body;
+        
         if (!titulo || !autor) {
             return res.status(400).json({ message: 'Os campos título e autor são obrigatórios.' });
         }
-        const capaPath = req.file ? req.file.path.replace(/\\/g, "/") : null;
+        
+        // 3. Removemos a lógica do 'req.file' e usamos a 'capa' (URL) diretamente
+        // const capaPath = req.file ? req.file.path.replace(/\\/g, "/") : null; (Linha antiga)
+        
         const [result] = await pool.execute(
             "INSERT INTO livros (titulo, autor, sinopse, capa) VALUES (?, ?, ?, ?)",
-            [titulo, autor, sinopse, capaPath]
+            [titulo, autor, sinopse, capa] // Passa a URL da capa
         );
+
         res.status(201).json({
             id: result.insertId,
             titulo,
             autor,
             sinopse,
-            capa: capaPath
+            capa: capa // Retorna a URL da capa
         });
     } catch (error) {
         console.error('Erro ao criar o livro:', error);
@@ -60,43 +70,40 @@ router.post('/', authMiddleware, upload.single('capa'), async (req, res) => {
     }
 });
 
-// --- ROTA: Editar um livro existente
+// --- ROTA: Editar um livro existente (MODIFICADA) ---
 // PUT /api/books/:id -> PUT /:id
-router.put('/:id', authMiddleware, upload.single('capa'), async (req, res) => {
+// 1. Removemos o middleware 'upload.single('capa')'
+router.put('/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const { titulo, autor, sinopse } = req.body;
-        const [rows] = await pool.execute("SELECT capa FROM livros WHERE id = ?", [id]);
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Livro não encontrado' });
-        }
-        const oldCapaPath = rows[0].capa;
-        let capaPath = oldCapaPath;
-        if (req.file) {
-            capaPath = req.file.path.replace(/\\/g, "/");
-            if (oldCapaPath && fs.existsSync(oldCapaPath)) {
-                fs.unlinkSync(oldCapaPath);
-            }
-        }
+        // 2. Adicionamos 'capa' à desestruturação do req.body
+        const { titulo, autor, sinopse, capa } = req.body;
+
+        // 3. Removemos toda a lógica de 'req.file', 'oldCapaPath' e 'fs.unlinkSync'
+        //    Não precisamos mais verificar o arquivo antigo, pois não estamos salvando arquivos.
+        
         await pool.execute(
             "UPDATE livros SET titulo = ?, autor = ?, sinopse = ?, capa = ? WHERE id = ?",
-            [titulo, autor, sinopse, capaPath, id]
+            [titulo, autor, sinopse, capa, id] // Passa a nova URL da capa
         );
+
         res.status(200).json({
             id: parseInt(id),
             titulo,
             autor,
             sinopse,
-            capa: capaPath
+            capa: capa // Retorna a nova URL
         });
+
     } catch (error) {
         console.error('Erro ao editar o livro:', error);
         res.status(500).json({ message: 'Erro interno do servidor' });
     }
 });
 
-// --- ROTA: Buscar comentários de um livro
-// GET /api/books/:id/comments
+// --- (O restante do arquivo: /comments, /rating, /review, /like, /likes) ---
+// --- (Nenhuma alteração necessária nessas rotas) ---
+// ... (copie o resto do seu arquivo books.js original aqui)
 router.get('/:id/comments', async (req, res) => {
     try {
         const { id } = req.params;
@@ -120,8 +127,6 @@ router.get('/:id/comments', async (req, res) => {
     }
 });
 
-// --- ROTA: Buscar avaliação média de um livro
-// GET /api/books/:id/rating
 router.get('/:id/rating', async (req, res) => {
     try {
         const { id } = req.params;
@@ -140,8 +145,6 @@ router.get('/:id/rating', async (req, res) => {
     }
 });
 
-// --- ROTA: Adicionar um comentário e uma avaliação (review)
-// POST /api/books/:id/review
 router.post('/:id/review', authMiddleware, async (req, res) => {
     try {
         const { id: livro_id } = req.params;
@@ -168,8 +171,6 @@ router.post('/:id/review', authMiddleware, async (req, res) => {
     }
 });
 
-// --- ROTA: Curtir ou descurtir um livro
-// POST /api/books/:id/like
 router.post('/:id/like', authMiddleware, async (req, res) => {
     try {
         const { id: livro_id } = req.params;
@@ -205,6 +206,7 @@ router.get('/:id/likes', async (req, res) => {
         if (authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
             try {
+                // Precisamos importar o jwt aqui
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 const userId = decoded.id;
                 const [userRows] = await pool.execute(

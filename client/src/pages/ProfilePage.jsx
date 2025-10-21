@@ -127,10 +127,13 @@ const ProfilePage = () => {
                     {likedBooks.map(book => (
                         <div key={book.id} className="book-card">
                             <Link to={`/book/${book.id}`}>
+                                
+                                {/* CORREÇÃO AQUI */}
                                 <img 
-                                    src={`http://localhost:3001/${book.capa}`} 
+                                    src={book.capa} 
                                     alt={`Capa de ${book.titulo}`} 
                                 />
+                                
                                 <h3>{book.titulo}</h3>
                             </Link>
                         </div>

@@ -1,34 +1,45 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-// Adicione um pouco de CSS para o formulário
 import './AdminForms.css';
 
 const AddBookPage = () => {
     const [titulo, setTitulo] = useState('');
     const [autor, setAutor] = useState('');
     const [sinopse, setSinopse] = useState('');
-    const [capa, setCapa] = useState(null);
+    
+    // 1. Mudar o estado da capa para string vazia
+    const [capa, setCapa] = useState(''); 
+    
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        const formData = new FormData();
-        formData.append('titulo', titulo);
-        formData.append('autor', autor);
-        formData.append('sinopse', sinopse);
-        formData.append('capa', capa);
+        // 2. Remover o 'FormData'
+        // const formData = new FormData(); ... (Linhas antigas)
+
+        // 3. Criar um objeto JSON simples
+        const newBook = {
+            titulo,
+            autor,
+            sinopse,
+            capa // Envia a URL da capa
+        };
 
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:3001/api/books', formData, {
+            
+            // 4. Enviar o objeto 'newBook' como dados
+            // 5. Remover o header 'Content-Type: multipart/form-data'
+            //    (Axios usará 'application/json' por padrão)
+            const res = await axios.post('http://localhost:3001/api/books', newBook, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
                     'Authorization': `Bearer ${token}`
                 }
             });
+            
             setMessage('Livro adicionado com sucesso! Redirecionando...');
             setTimeout(() => navigate(`/book/${res.data.id}`), 2000);
         } catch (err) {
@@ -52,10 +63,19 @@ const AddBookPage = () => {
                     <label>Sinopse</label>
                     <textarea value={sinopse} onChange={e => setSinopse(e.target.value)} required />
                 </div>
+                
+                {/* 6. Mudar o input de 'file' para 'url' (ou 'text') */}
                 <div className="form-group">
-                    <label>Capa do Livro</label>
-                    <input type="file" onChange={e => setCapa(e.target.files[0])} required />
+                    <label>URL da Capa do Livro</label>
+                    <input 
+                        type="url" 
+                        placeholder="https://exemplo.com/imagem.jpg"
+                        value={capa} 
+                        onChange={e => setCapa(e.target.value)} 
+                        required 
+                    />
                 </div>
+                
                 <button type="submit" className="submit-btn">Adicionar Livro</button>
             </form>
             {message && <p className="message">{message}</p>}
