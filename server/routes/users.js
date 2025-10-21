@@ -199,8 +199,8 @@ router.get('/me/following', authMiddleware, async (req, res) => {
                 u.id, 
                 u.nome
              FROM seguir s
-             JOIN usuarios u ON s.usuario_id_seguido = u.id
-             WHERE s.usuario_id_seguidor = ?
+             JOIN usuarios u ON s.usuario_seguido_id = u.id  -- <-- CORRETO AQUI
+             WHERE s.usuario_seguidor_id = ?
              ORDER BY u.nome ASC`,
             [loggedInUserId]
         );

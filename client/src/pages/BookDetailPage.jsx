@@ -113,12 +113,12 @@ const BookDetailPage = ({ openAuthModal }) => {
         } finally {
             setLoading(false);
         }
-    }, [id, token, user]);
+    }, [id, token, user?.id]);
 
     useEffect(() => {
         // A verificação 'user?.id' garante que o user não é nulo antes de acessar o id
         fetchBookDetails();
-    }, [id, user?.id]);
+    }, [fetchBookDetails]);
 
     const handleSubmitReview = async (e) => {
         e.preventDefault();
@@ -195,7 +195,7 @@ const BookDetailPage = ({ openAuthModal }) => {
     if (error) return <p>{error}</p>;
     if (!book) return <p>Livro não encontrado.</p>;
 
-    const coverImageUrl = book.capa ? `http://localhost:3001/${book.capa}` : 'caminho/para/imagem/padrao.jpg';
+    const coverImageUrl = book.capa ? book.capa : 'caminho/para/imagem/padrao.jpg';
     const averageRating = rating.total_avaliacoes > 0
         ? parseFloat(rating.media_avaliacoes).toFixed(1)
         : '0.0';

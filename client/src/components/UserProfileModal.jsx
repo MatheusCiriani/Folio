@@ -79,12 +79,15 @@ const UserProfileModal = ({ userId, closeModal }) => {
                             <div className="modal-book-list">
                                 {likedBooks.map(book => (
                                     <Link to={`/book/${book.id}`} key={book.id} className="modal-book-item" onClick={closeModal}>
-                                        <img src={`http://localhost:3001/${book.capa}`} alt={book.titulo} />
+                                        
+                                        {/* CORREÇÃO AQUI */}
+                                        <img src={book.capa} alt={book.titulo} /> 
+                                        
                                         <span>{book.titulo}</span>
                                     </Link>
                                 ))}
                             </div>
-                        ) : (
+                        ) :(
                             <p>{profile.nome} ainda não curtiu nenhum livro.</p>
                         )}
                     </>

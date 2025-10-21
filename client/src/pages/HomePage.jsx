@@ -56,13 +56,14 @@ const HomePage = () => {
                         <div key={book.id} className="book-card">
                            {/* O Link faz o card inteiro ser clicável e levar para a página de detalhes */}
                            <Link to={`/book/${book.id}`}>
+                                {/* CORREÇÃO AQUI: Use book.capa diretamente */}
                                 <img 
-                                    src={`http://localhost:3001/${book.capa}`} 
+                                    src={book.capa} 
                                     alt={`Capa de ${book.titulo}`} 
                                 />
                                 <h3>{book.titulo}</h3>
                                 <p>{book.autor}</p>
-                           </Link>
+                            </Link>
 
                            {/* {user?.email === 'admin@admin.com' && (
                                 <div className="admin-actions">
