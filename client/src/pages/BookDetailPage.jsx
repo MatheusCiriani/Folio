@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ConfirmModal from '../components/ConfirmModal'; // <<< IMPORTE O NOVO COMPONENTE
 import UserProfileModal from '../components/UserProfileModal';

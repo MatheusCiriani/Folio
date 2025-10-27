@@ -4,31 +4,41 @@ const { authMiddleware } = require('../authMiddleware');
 
 const router = express.Router();
 
-// --- ROTA: Seguir um usuário
-// POST /api/users/:followingId/follow -> POST /:followingId/follow
+// Rota para um usuário logado começar a seguir outro usuário
+// Método: POST
+// URL: /api/users/:followingId/follow
 router.post('/:followingId/follow', authMiddleware, async (req, res) => {
     try {
         const followerId = req.user.id; 
         const { followingId } = req.params; 
+
         if (parseInt(followerId) === parseInt(followingId)) {
             return res.status(400).json({ message: "Você não pode seguir a si mesmo." });
         }
+        
         const [userRows] = await pool.execute('SELECT id FROM usuarios WHERE id = ?', [followingId]);
         if (userRows.length === 0) {
             return res.status(404).json({ message: "Usuário a ser seguido não encontrado." });
         }
+
         const [followRows] = await pool.execute(
-            'SELECT * FROM seguir WHERE usuario_id_seguidor = ? AND usuario_id_seguido = ?',
+            // CORREÇÃO AQUI:
+            'SELECT * FROM seguir WHERE usuario_seguidor_id = ? AND usuario_seguido_id = ?',
             [followerId, followingId]
         );
+
         if (followRows.length > 0) {
             return res.status(409).json({ message: "Você já segue este usuário." });
         }
+
         await pool.execute(
-            'INSERT INTO seguir (usuario_id_seguidor, usuario_id_seguido) VALUES (?, ?)',
+            // CORREÇÃO AQUI:
+            'INSERT INTO seguir (usuario_seguidor_id, usuario_seguido_id) VALUES (?, ?)',
             [followerId, followingId]
         );
+
         res.status(201).json({ message: "Usuário seguido com sucesso!" });
+
     } catch (error) {
         console.error('Erro ao seguir usuário:', error);
         res.status(500).json({ message: 'Erro interno do servidor ao seguir usuário.' });
@@ -37,18 +47,26 @@ router.post('/:followingId/follow', authMiddleware, async (req, res) => {
 
 // --- ROTA: Deixar de seguir um usuário
 // DELETE /api/users/:followingId/follow -> DELETE /:followingId/follow
+// Rota para um usuário logado parar de seguir outro usuário
+// Método: DELETE
+// URL: /api/users/:followingId/follow
 router.delete('/:followingId/follow', authMiddleware, async (req, res) => {
     try {
         const followerId = req.user.id;
-        const { followingId } = req.params;
+        const { followingId } = req.params; 
+
         const [result] = await pool.execute(
-            'DELETE FROM seguir WHERE usuario_id_seguidor = ? AND usuario_id_seguido = ?',
+            // CORREÇÃO AQUI:
+            'DELETE FROM seguir WHERE usuario_seguidor_id = ? AND usuario_seguido_id = ?',
             [followerId, followingId]
         );
+
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: "Você não seguia este usuário." });
         }
+
         res.status(200).json({ message: "Usuário deixado de seguir com sucesso." });
+
     } catch (error) {
         console.error('Erro ao deixar de seguir usuário:', error);
         res.status(500).json({ message: 'Erro interno do servidor ao deixar de seguir usuário.' });
@@ -91,12 +109,10 @@ router.get('/:userId/liked-books', async (req, res) => {
 // (FOL-28) ROTA: Obter dados públicos de um perfil de usuário (para o modal)
 // GET /api/users/:userId/profile
 router.get('/:userId/profile', authMiddleware, async (req, res) => {
-    // Usamos authMiddleware para saber se o usuário LOGADO segue este perfil
     try {
-        const { userId } = req.params; // ID do perfil sendo visto
-        const loggedInUserId = req.user.id; // ID do usuário logado (do token)
+        const { userId } = req.params;
+        const loggedInUserId = req.user.id;
 
-        // 1. Pega dados públicos do usuário (nome, id)
         const [userRows] = await pool.execute(
             'SELECT id, nome, email FROM usuarios WHERE id = ?',
             [userId]
@@ -110,18 +126,18 @@ router.get('/:userId/profile', authMiddleware, async (req, res) => {
 
         // 2. Verifica o status de "seguir"
         const [followRows] = await pool.execute(
-            'SELECT * FROM seguir WHERE usuario_id_seguidor = ? AND usuario_id_seguido = ?',
+            // CORREÇÃO AQUI:
+            'SELECT * FROM seguir WHERE usuario_seguidor_id = ? AND usuario_seguido_id = ?',
             [loggedInUserId, userId]
         );
         
-        // Esconde o email se não for o perfil do próprio usuário
         if(profileUser.id !== loggedInUserId) {
             delete profileUser.email;
         }
 
         res.status(200).json({
             ...profileUser,
-            isFollowing: followRows.length > 0 // true se o usuário logado segue este perfil
+            isFollowing: followRows.length > 0 
         });
 
     } catch (error) {
