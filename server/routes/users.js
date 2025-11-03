@@ -1,5 +1,5 @@
 const express = require('express');
-const pool = require('../db');
+const poolPromise = require('../db');
 const { authMiddleware } = require('../authMiddleware');
 
 const router = express.Router();
@@ -9,6 +9,7 @@ const router = express.Router();
 // URL: /api/users/:followingId/follow
 router.post('/:followingId/follow', authMiddleware, async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const followerId = req.user.id; 
         const { followingId } = req.params; 
 
@@ -52,6 +53,7 @@ router.post('/:followingId/follow', authMiddleware, async (req, res) => {
 // URL: /api/users/:followingId/follow
 router.delete('/:followingId/follow', authMiddleware, async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const followerId = req.user.id;
         const { followingId } = req.params; 
 
@@ -83,6 +85,7 @@ router.delete('/:followingId/follow', authMiddleware, async (req, res) => {
 // GET /api/users/:userId/liked-books
 router.get('/:userId/liked-books', async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const { userId } = req.params;
 
         const [rows] = await pool.execute(
@@ -110,6 +113,7 @@ router.get('/:userId/liked-books', async (req, res) => {
 // GET /api/users/:userId/profile
 router.get('/:userId/profile', authMiddleware, async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const { userId } = req.params;
         const loggedInUserId = req.user.id;
 
@@ -151,6 +155,7 @@ router.get('/:userId/profile', authMiddleware, async (req, res) => {
 router.get('/me', authMiddleware, async (req, res) => {
     // authMiddleware é o suficiente, já temos o ID em req.user.id
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const userId = req.user.id;
         const [rows] = await pool.execute(
             'SELECT id, nome, email, criado_em FROM usuarios WHERE id = ?',
@@ -172,6 +177,7 @@ router.get('/me', authMiddleware, async (req, res) => {
 // PUT /api/users/me
 router.put('/me', authMiddleware, async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const userId = req.user.id;
         const { nome } = req.body; // Por enquanto, só permitimos alterar o nome
 
@@ -208,6 +214,7 @@ router.put('/me', authMiddleware, async (req, res) => {
 // GET /api/users/me/following
 router.get('/me/following', authMiddleware, async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const loggedInUserId = req.user.id;
 
         const [rows] = await pool.execute(
@@ -225,6 +232,34 @@ router.get('/me/following', authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error('Erro ao buscar lista de "seguindo":', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
+// --- NOVA ROTA: Obter todas as listas de um usuário específico (para o modal público) ---
+// GET /api/users/:userId/lists
+router.get('/:userId/lists', async (req, res) => {
+    try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
+        const { userId } = req.params;
+
+        const [lists] = await pool.execute(
+            `SELECT 
+                lu.id, 
+                lu.nome, 
+                COUNT(ll.livro_id) AS total_livros
+             FROM listas_usuarios lu
+             LEFT JOIN listas_livros ll ON lu.id = ll.lista_id
+             WHERE lu.usuario_id = ?
+             GROUP BY lu.id
+             ORDER BY lu.nome ASC`,
+            [userId]
+        );
+
+        res.status(200).json(lists);
+
+    } catch (error) {
+        console.error('Erro ao buscar listas públicas do usuário:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });

@@ -1,7 +1,8 @@
+// server/authMiddleware.js
 const jwt = require('jsonwebtoken');
-const pool = require('./db'); // <-- Importe o pool do banco de dados
+const poolPromise = require('./db'); // <<< 1. Renomeie a importação
 
-const authMiddleware = async (req, res, next) => { // <-- Transforme em 'async'
+const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -11,14 +12,15 @@ const authMiddleware = async (req, res, next) => { // <-- Transforme em 'async'
     const token = authHeader.split(' ')[1];
 
     try {
-        // --- NOVO: VERIFICAÇÃO DA BLACKLIST ---
-        // Implementa a lógica do PDF [cite: 75-77] usando o banco de dados 
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
+        
+        // --- VERIFICAÇÃO DA BLACKLIST ---
+        // Agora 'pool.execute' vai funcionar
         const [rows] = await pool.execute(
             "SELECT token FROM token_blacklist WHERE token = ?",
             [token]
         );
 
-        // Se o token foi encontrado na blacklist, ele é inválido.
         if (rows.length > 0) {
             return res.status(401).json({ message: 'Token inválido (logout).' });
         }
@@ -28,7 +30,8 @@ const authMiddleware = async (req, res, next) => { // <-- Transforme em 'async'
         req.user = decoded; 
         next(); 
     } catch (error) {
-        // Trata tokens expirados ou malformados
+        // Se a verificação do pool ou do jwt.verify falhar
+        console.error("Erro no authMiddleware:", error); // Adicionei este log para te ajudar no futuro
         res.status(400).json({ message: 'Token inválido.' });
     }
 };

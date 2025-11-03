@@ -1,0 +1,34 @@
+/* components/AddToListModal.css */
+.lists-container {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid var(--input-border);
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 1rem;
+}
+
+.list-item-btn {
+    display: block;
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    text-align: left;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+}
+.list-item-btn:hover {
+    background-color: #f0f0f0;
+    border-color: var(--primary-blue);
+}
+.list-item-btn:last-child {
+    margin-bottom: 0;
+}
+
+.message {
+    font-weight: 500;
+}

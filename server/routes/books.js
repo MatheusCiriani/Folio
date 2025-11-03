@@ -1,5 +1,5 @@
 const express = require('express');
-const pool = require('../db');
+const poolPromise = require('../db'); // <<< 1. Renomeie a importação
 const fs = require('fs');
 const jwt = require('jsonwebtoken'); // <<< ADICIONE ESTA LINHA
 const { authMiddleware, adminMiddleware } = require('../authMiddleware');
@@ -287,6 +287,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 // ... (copie o resto do seu arquivo books.js original aqui)
 router.get('/:id/comments', async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< ADICIONE AQUI
         const { id } = req.params;
         const [comments] = await pool.execute(
             `SELECT 
@@ -310,6 +311,7 @@ router.get('/:id/comments', async (req, res) => {
 
 router.get('/:id/rating', async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< ADICIONE AQUI
         const { id } = req.params;
         const [result] = await pool.execute(
             `SELECT 
@@ -328,6 +330,7 @@ router.get('/:id/rating', async (req, res) => {
 
 router.post('/:id/review', authMiddleware, async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< ADICIONE AQUI
         const { id: livro_id } = req.params;
         const { id: usuario_id } = req.user;
         const { texto, nota } = req.body;
@@ -354,6 +357,7 @@ router.post('/:id/review', authMiddleware, async (req, res) => {
 
 router.post('/:id/like', authMiddleware, async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< ADICIONE AQUI
         const { id: livro_id } = req.params;
         const { id: usuario_id } = req.user;
         const [rows] = await pool.execute(
@@ -377,6 +381,7 @@ router.post('/:id/like', authMiddleware, async (req, res) => {
 // GET /api/books/:id/likes
 router.get('/:id/likes', async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< ADICIONE AQUI
         const { id: livro_id } = req.params;
         const [countRows] = await pool.execute(
             'SELECT COUNT(*) AS totalCurtidas FROM curtidas WHERE livro_id = ?',

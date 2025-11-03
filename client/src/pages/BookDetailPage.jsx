@@ -30,7 +30,7 @@ const StarRating = ({ rating, setRating }) => {
 };
 
 
-const BookDetailPage = ({ openAuthModal }) => {
+const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal }) => {
     const { id } = useParams();
     const [book, setBook] = useState(null);
     const [comments, setComments] = useState([]);
@@ -42,18 +42,18 @@ const BookDetailPage = ({ openAuthModal }) => {
     const [newRating, setNewRating] = useState(0);
     const [userHasReviewed, setUserHasReviewed] = useState(false);
 
+    // --- CORREÇÃO DO LOOP ---
+    // 1. Pegue o token e o user (e seu ID) AQUI FORA.
+    // Assim, 'userId' é um valor primitivo (estável) que podemos usar nos hooks.
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('usuarios'));
+    const userId = user?.id; // Esta é a dependência estável que usaremos
+    // --- FIM DA CORREÇÃO ---
 
-    // NOVOS ESTADOS PARA EDIÇÃO
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editText, setEditText] = useState('');
     const [editRating, setEditRating] = useState(0);
-
-    // NOVO ESTADO para controlar o modal de exclusão
     const [commentToDelete, setCommentToDelete] = useState(null);
-
-    // --- Estados de Curtidas ---
     const [likes, setLikes] = useState(0);
     const [userLiked, setUserLiked] = useState(false);
     const [viewingProfileId, setViewingProfileId] = useState(null);
@@ -62,8 +62,6 @@ const BookDetailPage = ({ openAuthModal }) => {
         try {
             setLoading(true);
             setError('');
-
-            // Monta headers opcionais para enviar token quando houver
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
             const [bookRes, commentsRes, ratingRes, likesRes] = await Promise.all([
@@ -76,10 +74,13 @@ const BookDetailPage = ({ openAuthModal }) => {
             setBook(bookRes.data);
 
             const fetchedComments = commentsRes.data;
-            if (user) {
+            
+            // --- CORREÇÃO DO LOOP ---
+            // 2. Use 'userId' (estável) aqui dentro, em vez do objeto 'user'
+            if (userId) {
                 let userComment = null;
                 const otherComments = fetchedComments.filter(comment => {
-                    if (comment.usuario_id === user.id) {
+                    if (comment.usuario_id === userId) { // Usando userId
                         userComment = comment;
                         return false;
                     }
@@ -94,14 +95,15 @@ const BookDetailPage = ({ openAuthModal }) => {
                     setComments(fetchedComments);
                 }
             } else {
+                setUserHasReviewed(false);
                 setComments(fetchedComments);
             }
+            // --- FIM DA CORREÇÃO ---
 
             if (ratingRes.data && ratingRes.data.media_avaliacoes !== undefined) {
                 setRating(ratingRes.data);
             }
 
-            // Curtidas: atualiza contagem e se o usuário atual já curtiu
             if (likesRes && likesRes.data) {
                 setLikes(likesRes.data.totalCurtidas || 0);
                 setUserLiked(!!likesRes.data.userLiked);
@@ -113,7 +115,9 @@ const BookDetailPage = ({ openAuthModal }) => {
         } finally {
             setLoading(false);
         }
-    }, [id, token, user]);
+    // --- CORREÇÃO DO LOOP ---
+    // 3. Use 'userId' no array de dependências.
+    }, [id, token, userId]);
 
     useEffect(() => {
         // A verificação 'user?.id' garante que o user não é nulo antes de acessar o id
@@ -136,7 +140,7 @@ const BookDetailPage = ({ openAuthModal }) => {
 
             setNewComment('');
             setNewRating(0);
-            fetchBookDetails(); // Recarrega todos os dados para ter a visão mais atual
+            fetchBookDetails(); 
 
         } catch (err) {
             console.error("Erro ao enviar avaliação:", err);
@@ -221,6 +225,14 @@ const BookDetailPage = ({ openAuthModal }) => {
         setEditRating(0);
     };
 
+    const handleAddToListClick = () => {
+        if (!token) {
+            openAuthModal('login'); // Abre o modal de login se não estiver logado
+        } else {
+            openAddToListModal(book.id); // Abre o modal de adicionar à lista
+        }
+    };
+
     const handleUpdateReview = async (e) => {
         e.preventDefault();
         try {
@@ -265,7 +277,7 @@ const BookDetailPage = ({ openAuthModal }) => {
                 <img src={coverImageUrl} alt={`Capa de ${book.titulo}`} className="book-cover-large" />
                 <h1>{book.titulo}</h1>
                 <h2>por {book.autor}</h2>
-
+                
                 {book.generos && book.generos.length > 0 && (
                     <div className="genre-tags">
                         {book.generos.map(genre => (
@@ -275,7 +287,7 @@ const BookDetailPage = ({ openAuthModal }) => {
                         ))}
                     </div>
                 )}
-
+                
                 {rating.total_avaliacoes > 0 && (
                     <div className="rating">
                         <span>⭐ {averageRating} ({rating.total_avaliacoes} avaliações)</span>
@@ -284,6 +296,11 @@ const BookDetailPage = ({ openAuthModal }) => {
                 <p>{book.sinopse}</p>
                 <button onClick={handleLike} className="like-button">
                     {userLiked ? '💔 Remover Curtida' : '❤️ Curtir Livro'} ({likes})
+                </button>
+                
+                {/* Botão Adicionar à Lista */}
+                <button onClick={handleAddToListClick} className="add-to-list-button">
+                    + Adicionar à Lista
                 </button>
             </div>
 
@@ -336,7 +353,6 @@ const BookDetailPage = ({ openAuthModal }) => {
                             /* MODO DE VISUALIZAÇÃO (NORMAL) */
                             <>
                                 <div className="comment-header">
-                                    {/* 3. TRANSFORME O NOME EM UM BOTÃO */}
                                     <strong 
                                         className="comment-author-name" 
                                         onClick={() => setViewingProfileId(comment.usuario_id)}
@@ -358,7 +374,6 @@ const BookDetailPage = ({ openAuthModal }) => {
 
                                     {user && user.id === comment.usuario_id && (
                                         <>
-                                            {/* Adicione as classes aqui */}
                                             <button onClick={() => handleEditClick(comment)} className="btn-edit">Editar</button>
                                             <button onClick={() => handleDeleteClick(comment.id)} className="btn-delete">Deletar</button>
                                         </>
@@ -375,6 +390,7 @@ const BookDetailPage = ({ openAuthModal }) => {
                 <UserProfileModal
                     userId={viewingProfileId}
                     closeModal={() => setViewingProfileId(null)}
+                    openListDetailModal={openListDetailModal} // <<< ADICIONE ESTA LINHA
                 />
             )}
 

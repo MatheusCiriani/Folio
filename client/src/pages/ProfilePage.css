@@ -58,3 +58,80 @@
     padding: 0 1rem 1rem 1rem;
     font-size: 0.9rem;
 }
+
+/* Adicione ao final de ProfilePage.css */
+
+.list-management-section {
+    background-color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.btn-new-list {
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+.btn-new-list:hover {
+    opacity: 0.9;
+}
+
+.my-lists-container {
+    list-style: none;
+    padding: 0;
+}
+
+.my-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+.my-list-item:last-child {
+    border-bottom: none;
+}
+
+.list-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+.list-name:hover {
+    color: var(--primary-blue);
+}
+
+.list-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 5px 8px;
+    border-radius: 5px;
+}
+.btn-view { color: var(--primary-blue); }
+.btn-edit { color: #f0ad4e; } /* Laranja */
+.btn-delete { color: var(--error-color); } /* Vermelho */
+
+.btn-action:hover {
+    background-color: #f4f4f4;
+}

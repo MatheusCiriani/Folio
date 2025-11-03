@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const pool = require('../db'); // <-- Atenção ao '../' para voltar um diretório
+const poolPromise = require('../db'); // <-- Atenção ao '../' para voltar um diretório
 const { authMiddleware } = require('../authMiddleware'); // Importe o authMiddleware
 
 const router = express.Router();
@@ -11,6 +11,7 @@ const router = express.Router();
 // Novo caminho: /register (pois /api/auth já está no index.js)
 router.post('/register', async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const { nome, email, senha } = req.body;
         if (!nome || !email || !senha) {
             return res.status(400).json({ message: "Por favor, preencha todos os campos." });
@@ -35,6 +36,7 @@ router.post('/register', async (req, res) => {
 // Novo caminho: /login
 router.post('/login', async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const { email, senha } = req.body;
         if (!email || !senha) {
             return res.status(400).json({ message: "Por favor, preencha e-mail e senha." });
@@ -74,6 +76,7 @@ router.post('/login', async (req, res) => {
 // Caminho: POST /api/auth/logout
 router.post('/logout', authMiddleware, async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         // 1. Pega o token do header (o mesmo que o authMiddleware usou)
         const token = req.headers.authorization.split(' ')[1];
 

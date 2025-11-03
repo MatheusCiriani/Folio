@@ -1,11 +1,12 @@
 // server/routes/genres.js
 const express = require('express');
-const pool = require('../db');
+const poolPromise = require('../db'); // <<< 1. Mude o nome aqui
 const router = express.Router();
 
 // ROTA: Buscar todos os gêneros
 router.get('/', async (req, res) => {
     try {
+        const pool = await poolPromise; // <<< 2. Adicione esta linha
         const [rows] = await pool.execute("SELECT * FROM generos ORDER BY nome ASC");
         res.status(200).json(rows);
     } catch (error) {

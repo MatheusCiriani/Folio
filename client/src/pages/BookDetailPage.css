@@ -225,3 +225,20 @@
     font-size: 0.9rem;
     font-weight: 500;
 }
+
+/* Adicione ao final de BookDetailPage.css */
+.add-to-list-button {
+    margin-top: 1rem;
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    width: 100%;
+    font-size: 1rem;
+}
+.add-to-list-button:hover {
+    opacity: 0.9;
+}

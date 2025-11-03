@@ -1,20 +1,97 @@
-.comment-author-name { cursor: pointer; text-decoration: underline; }
+/* --- Estilos para a Busca no Modal de Lista --- */
 
-/* Estilo para o modal de perfil (substitui o modal-content padrão) */
-.profile-modal {
-    max-width: 500px;  /* Define uma largura máxima */
-    width: 90%;
-    max-height: 80vh; /* Define uma altura máxima (80% da tela) */
-    
-    /* Importante: Adiciona scroll se o conteúdo estourar */
-    overflow-y: auto; 
-    
-    display: flex;
-    flex-direction: column;
+.list-detail-search {
+    width: 100%;
+    margin: 10px 0;
 }
 
-.profile-modal h2 {
-    margin-bottom: 10px;
+.list-detail-search input {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid var(--input-border);
+}
+
+.search-results-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item img {
+    width: 30px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+.search-result-item span {
+    flex-grow: 1; /* O nome ocupa o espaço */
+    font-size: 14px;
+}
+
+.btn-add-book-to-list {
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.btn-add-book-to-list:hover {
+    opacity: 0.9;
+}
+
+/* ... (outros estilos do modal) ... */
+
+.modal-book-list {
+    display: flex;
+    flex-direction: column; /* Lista vertical */
+    gap: 15px;
+    width: 100%;
+}
+
+.modal-book-item {
+    display: flex;       /* Faz o item ficar na horizontal (imagem ao lado do texto) */
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.modal-book-item:hover {
+    background-color: var(--background-color);
+}
+
+/* --- ESTA É A CORREÇÃO PRINCIPAL --- */
+.modal-book-item img {
+    width: 40px;      /* Define uma largura fixa */
+    height: 60px;     /* Define uma altura fixa */
+    object-fit: cover; /* Garante que a imagem cubra o espaço sem distorcer */
+    border-radius: 3px;
+    flex-shrink: 0;   /* Impede que a imagem encolha */
+}
+/* --- FIM DA CORREÇÃO --- */
+
+.modal-book-item span {
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .btn-follow {
@@ -31,43 +108,4 @@
 
 .btn-follow:hover {
     opacity: 0.9;
-}
-
-.profile-modal h4 {
-    margin-top: 15px;
-    border-top: 1px solid var(--input-border);
-    padding-top: 15px;
-}
-
-/* Lista de livros dentro do modal */
-.modal-book-list {
-    display: flex;
-    flex-direction: column; /* Lista vertical */
-    gap: 15px;
-    width: 100%;
-}
-
-.modal-book-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 5px;
-    border-radius: 5px;
-    transition: background-color 0.2s;
-}
-
-.modal-book-item:hover {
-    background-color: var(--background-color);
-}
-
-.modal-book-item img {
-    width: 40px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 3px;
-}
-
-.modal-book-item span {
-    font-size: 14px;
-    font-weight: 500;
 }
