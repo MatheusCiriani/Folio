@@ -213,5 +213,33 @@ router.get('/me/following', authMiddleware, async (req, res) => {
     }
 });
 
+// (FOL-33) ROTA: Obter a lista COMPLETA de todos os livros curtidos pelo usuário logado
+// GET /api/users/me/liked-books
+router.get('/me/liked-books', authMiddleware, async (req, res) => {
+    try {
+        // Usa o ID do usuário LOGADO (obtido do Token JWT)
+        const userId = req.user.id; 
+
+        const [likedBooks] = await pool.execute(
+            `SELECT 
+                l.id,
+                l.titulo, 
+                l.capa, // <--- Atenção: Se o nome for 'capa_url', dará erro silencioso aqui.
+                c.criado_em AS data_curtida
+            FROM curtidas c
+            JOIN livros l ON c.livro_id = l.id // <--- 1. Atenção neste JOIN.
+            WHERE c.usuario_id = ? // <--- 2. Atenção neste WHERE.
+            ORDER BY c.criado_em DESC`, 
+            [userId]
+        );
+
+        // O resultado esperado é a lista completa dos livros
+        res.status(200).json(likedBooks); 
+    } catch (error) {
+        console.error('Erro ao buscar todos os livros curtidos do usuário logado:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao buscar sua lista de curtidas.' });
+    }
+});
+
 
 module.exports = router;

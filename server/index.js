@@ -28,7 +28,7 @@ app.use('/uploads', express.static(path.join(__dirname, uploadDir)));
 // O Express vai direcionar qualquer requisição que comece com:
 // '/api/auth' -> para o arquivo authRoutes
 // '/api/books' -> para o arquivo bookRoutes
-// etc.
+
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/comments', commentRoutes);
