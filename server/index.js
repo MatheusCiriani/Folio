@@ -13,6 +13,7 @@ const bookRoutes = require('./routes/books');
 const commentRoutes = require('./routes/comments');
 const userRoutes = require('./routes/users');
 const recommendationRoutes = require('./routes/recommendations');
+const genreRoutes = require('./routes/genres');
 
 // --- Configuração do App ---
 const app = express();
@@ -76,6 +77,7 @@ const startServer = async () =>{
         app.use('/api/comments', commentRoutes);
         app.use('/api/users', userRoutes);
         app.use('/api/recommendations', recommendationRoutes);
+        app.use('/api/genres', genreRoutes);
     
         // 3. Iniciar o Servidor ---
         app.listen(PORT, async () => {

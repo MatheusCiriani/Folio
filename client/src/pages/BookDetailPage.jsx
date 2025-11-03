@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import ConfirmModal from '../components/ConfirmModal'; // <<< IMPORTE O NOVO COMPONENTE
 import UserProfileModal from '../components/UserProfileModal';
@@ -113,7 +113,7 @@ const BookDetailPage = ({ openAuthModal }) => {
         } finally {
             setLoading(false);
         }
-    }, [id, token, user?.id]);
+    }, [id, token, user]);
 
     useEffect(() => {
         // A verificação 'user?.id' garante que o user não é nulo antes de acessar o id
@@ -265,6 +265,17 @@ const BookDetailPage = ({ openAuthModal }) => {
                 <img src={coverImageUrl} alt={`Capa de ${book.titulo}`} className="book-cover-large" />
                 <h1>{book.titulo}</h1>
                 <h2>por {book.autor}</h2>
+
+                {book.generos && book.generos.length > 0 && (
+                    <div className="genre-tags">
+                        {book.generos.map(genre => (
+                            <span key={genre.id} className="genre-tag">
+                                {genre.nome}
+                            </span>
+                        ))}
+                    </div>
+                )}
+
                 {rating.total_avaliacoes > 0 && (
                     <div className="rating">
                         <span>⭐ {averageRating} ({rating.total_avaliacoes} avaliações)</span>

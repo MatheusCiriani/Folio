@@ -48,3 +48,26 @@
   margin-top: 1rem;
   font-weight: 500;
 }
+
+/* Estilos para o grupo de checkboxes de gênero */
+.form-group .checkbox-group {
+    display: flex;
+    flex-wrap: wrap; /* Faz os gêneros quebrarem a linha se não couberem */
+    gap: 10px 15px;  /* Espaçamento vertical e horizontal */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Espaço entre o checkbox e o texto */
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+    cursor: pointer;
+}

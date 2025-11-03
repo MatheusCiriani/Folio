@@ -8,9 +8,38 @@ const { upload } = require('../config/multer'); // Importa o multer configurado
 const router = express.Router();
 
 // --- ROTA: Buscar todos os livros (Sem alteração) ---
+// router.get('/', async (req, res) => {
+//     try {
+//         const [rows] = await pool.execute("SELECT * FROM livros ORDER BY titulo ASC");
+//         res.status(200).json(rows);
+//     } catch (error) {
+//         console.error('Erro ao buscar todos os livros:', error);
+//         res.status(500).json({ message: 'Erro interno do servidor' });
+//     }
+// });
+
 router.get('/', async (req, res) => {
     try {
-        const [rows] = await pool.execute("SELECT * FROM livros ORDER BY titulo ASC");
+        const { genre } = req.query; // Pega o ?genre=ID da URL
+        const pool = await poolPromise; // Espera o pool ficar pronto
+
+        let query = `
+            SELECT DISTINCT l.* FROM livros l
+        `;
+        const params = [];
+
+        // Se um ID de gênero foi passado, fazemos o JOIN
+        if (genre && genre !== '') {
+            query += `
+                JOIN livros_generos lg ON l.id = lg.livro_id
+                WHERE lg.genero_id = ?
+            `;
+            params.push(genre);
+        }
+
+        query += " ORDER BY l.titulo ASC";
+
+        const [rows] = await pool.execute(query, params);
         res.status(200).json(rows);
     } catch (error) {
         console.error('Erro ao buscar todos os livros:', error);
@@ -19,17 +48,61 @@ router.get('/', async (req, res) => {
 });
 
 // --- ROTA: Buscar um livro pelo ID (Sem alteração) ---
+// router.get('/:id', async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const [rows] = await pool.execute("SELECT * FROM livros WHERE id = ?", [id]);
+
+//         if (rows.length === 0) {
+//             return res.status(404).json({ message: 'Livro não encontrado' });
+//         }
+        
+//         // Esta é a linha que estava faltando ou quebrada
+//         res.status(200).json(rows[0]); 
+
+//     } catch (error) {
+//         console.error('Erro ao buscar o livro:', error);
+//         res.status(500).json({ message: 'Erro interno do servidor' });
+//     }
+// });
+
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const [rows] = await pool.execute("SELECT * FROM livros WHERE id = ?", [id]);
+        const pool = await poolPromise;
+        
+        // Usamos GROUP_CONCAT para juntar todos os gêneros num campo só
+        const query = `
+            SELECT 
+                l.*, 
+                GROUP_CONCAT(g.id, ':', g.nome) as generos_concat
+            FROM livros l
+            LEFT JOIN livros_generos lg ON l.id = lg.livro_id
+            LEFT JOIN generos g ON lg.genero_id = g.id
+            WHERE l.id = ?
+            GROUP BY l.id
+        `;
+        
+        const [rows] = await pool.execute(query, [id]);
 
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Livro não encontrado' });
         }
         
-        // Esta é a linha que estava faltando ou quebrada
-        res.status(200).json(rows[0]); 
+        const book = rows[0];
+
+        // Transforma a string "1:Ficção,2:Aventura" em um array de objetos
+        if (book.generos_concat) {
+            book.generos = book.generos_concat.split(',').map(g => {
+                const [id, nome] = g.split(':');
+                return { id: parseInt(id), nome };
+            });
+        } else {
+            book.generos = []; // Se não tiver gêneros, retorna array vazio
+        }
+        delete book.generos_concat; // Remove o campo extra
+
+        res.status(200).json(book); 
 
     } catch (error) {
         console.error('Erro ao buscar o livro:', error);
@@ -40,64 +113,172 @@ router.get('/:id', async (req, res) => {
 // --- ROTA: Criar um novo livro (MODIFICADA) ---
 // POST /api/books -> POST /
 // 1. Removemos o middleware 'upload.single('capa')'
+// router.post('/', authMiddleware, async (req, res) => {
+//     try {
+//         // 2. Adicionamos 'capa' à desestruturação do req.body
+//         const { titulo, autor, sinopse, capa } = req.body;
+        
+//         if (!titulo || !autor) {
+//             return res.status(400).json({ message: 'Os campos título e autor são obrigatórios.' });
+//         }
+        
+//         // 3. Removemos a lógica do 'req.file' e usamos a 'capa' (URL) diretamente
+//         // const capaPath = req.file ? req.file.path.replace(/\\/g, "/") : null; (Linha antiga)
+        
+//         const [result] = await pool.execute(
+//             "INSERT INTO livros (titulo, autor, sinopse, capa) VALUES (?, ?, ?, ?)",
+//             [titulo, autor, sinopse, capa] // Passa a URL da capa
+//         );
+
+//         res.status(201).json({
+//             id: result.insertId,
+//             titulo,
+//             autor,
+//             sinopse,
+//             capa: capa // Retorna a URL da capa
+//         });
+//     } catch (error) {
+//         console.error('Erro ao criar o livro:', error);
+//         res.status(500).json({ message: 'Erro interno do servidor' });
+//     }
+// });
+
 router.post('/', authMiddleware, async (req, res) => {
+    let connection; // Definimos a conexão aqui para usá-la no try/catch/finally
     try {
-        // 2. Adicionamos 'capa' à desestruturação do req.body
-        const { titulo, autor, sinopse, capa } = req.body;
+        const pool = await poolPromise;
+        connection = await pool.getConnection(); // Pega uma conexão do pool
+        
+        // 1. Pega os dados (agora inclui 'generos')
+        // 'generos' deve ser um array de IDs, ex: [1, 3, 5]
+        const { titulo, autor, sinopse, capa, generos } = req.body;
         
         if (!titulo || !autor) {
             return res.status(400).json({ message: 'Os campos título e autor são obrigatórios.' });
         }
         
-        // 3. Removemos a lógica do 'req.file' e usamos a 'capa' (URL) diretamente
-        // const capaPath = req.file ? req.file.path.replace(/\\/g, "/") : null; (Linha antiga)
-        
-        const [result] = await pool.execute(
+        // 2. Inicia a Transação
+        await connection.beginTransaction();
+
+        // 3. Insere o livro
+        const [result] = await connection.execute(
             "INSERT INTO livros (titulo, autor, sinopse, capa) VALUES (?, ?, ?, ?)",
-            [titulo, autor, sinopse, capa] // Passa a URL da capa
+            [titulo, autor, sinopse, capa]
         );
+        
+        const livroId = result.insertId;
+
+        // 4. Insere os gêneros (se houver)
+        if (generos && generos.length > 0) {
+            const generosValues = generos.map(generoId => [livroId, generoId]);
+            await connection.query(
+                "INSERT INTO livros_generos (livro_id, genero_id) VALUES ?",
+                [generosValues] // O 'query' formata isso para múltiplos VALUES
+            );
+        }
+
+        // 5. Commita a Transação
+        await connection.commit();
 
         res.status(201).json({
-            id: result.insertId,
+            id: livroId,
             titulo,
             autor,
             sinopse,
-            capa: capa // Retorna a URL da capa
+            capa,
+            generos // Retorna os IDs dos gêneros
         });
+
     } catch (error) {
+        // 6. Rollback em caso de erro
+        if (connection) await connection.rollback();
         console.error('Erro ao criar o livro:', error);
         res.status(500).json({ message: 'Erro interno do servidor' });
+    } finally {
+        // 7. Libera a conexão de volta para o pool
+        if (connection) connection.release();
     }
 });
 
 // --- ROTA: Editar um livro existente (MODIFICADA) ---
 // PUT /api/books/:id -> PUT /:id
 // 1. Removemos o middleware 'upload.single('capa')'
+// router.put('/:id', authMiddleware, async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         // 2. Adicionamos 'capa' à desestruturação do req.body
+//         const { titulo, autor, sinopse, capa } = req.body;
+
+//         // 3. Removemos toda a lógica de 'req.file', 'oldCapaPath' e 'fs.unlinkSync'
+//         //    Não precisamos mais verificar o arquivo antigo, pois não estamos salvando arquivos.
+        
+//         await pool.execute(
+//             "UPDATE livros SET titulo = ?, autor = ?, sinopse = ?, capa = ? WHERE id = ?",
+//             [titulo, autor, sinopse, capa, id] // Passa a nova URL da capa
+//         );
+
+//         res.status(200).json({
+//             id: parseInt(id),
+//             titulo,
+//             autor,
+//             sinopse,
+//             capa: capa // Retorna a nova URL
+//         });
+
+//     } catch (error) {
+//         console.error('Erro ao editar o livro:', error);
+//         res.status(500).json({ message: 'Erro interno do servidor' });
+//     }
+// });
+
 router.put('/:id', authMiddleware, async (req, res) => {
+    let connection;
     try {
         const { id } = req.params;
-        // 2. Adicionamos 'capa' à desestruturação do req.body
-        const { titulo, autor, sinopse, capa } = req.body;
-
-        // 3. Removemos toda a lógica de 'req.file', 'oldCapaPath' e 'fs.unlinkSync'
-        //    Não precisamos mais verificar o arquivo antigo, pois não estamos salvando arquivos.
+        const { titulo, autor, sinopse, capa, generos } = req.body;
         
-        await pool.execute(
+        const pool = await poolPromise;
+        connection = await pool.getConnection();
+        
+        // 1. Inicia a Transação
+        await connection.beginTransaction();
+
+        // 2. Atualiza os dados do livro
+        await connection.execute(
             "UPDATE livros SET titulo = ?, autor = ?, sinopse = ?, capa = ? WHERE id = ?",
-            [titulo, autor, sinopse, capa, id] // Passa a nova URL da capa
+            [titulo, autor, sinopse, capa, id]
         );
+
+        // 3. Deleta os gêneros ANTIGOS
+        await connection.execute("DELETE FROM livros_generos WHERE livro_id = ?", [id]);
+
+        // 4. Insere os gêneros NOVOS (se houver)
+        if (generos && generos.length > 0) {
+            const generosValues = generos.map(generoId => [id, generoId]);
+            await connection.query(
+                "INSERT INTO livros_generos (livro_id, genero_id) VALUES ?",
+                [generosValues]
+            );
+        }
+        
+        // 5. Commita a transação
+        await connection.commit();
 
         res.status(200).json({
             id: parseInt(id),
             titulo,
             autor,
             sinopse,
-            capa: capa // Retorna a nova URL
+            capa,
+            generos
         });
 
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error('Erro ao editar o livro:', error);
         res.status(500).json({ message: 'Erro interno do servidor' });
+    } finally {
+        if (connection) connection.release();
     }
 });
 

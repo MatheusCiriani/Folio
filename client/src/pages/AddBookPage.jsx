@@ -1,49 +1,69 @@
-import React, { useState } from 'react';
+// pages/AddBookPage.jsx
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './AdminForms.css';
+import './AdminForms.css'; //
 
 const AddBookPage = () => {
-    const [titulo, setTitulo] = useState('');
-    const [autor, setAutor] = useState('');
-    const [sinopse, setSinopse] = useState('');
+    const [titulo, setTitulo] = useState(''); //
+    const [autor, setAutor] = useState(''); //
+    const [sinopse, setSinopse] = useState(''); //
+    const [capa, setCapa] = useState('');  //
     
-    // 1. Mudar o estado da capa para string vazia
-    const [capa, setCapa] = useState(''); 
+    // --- NOVOS ESTADOS ---
+    const [allGenres, setAllGenres] = useState([]); // Para listar os gêneros
+    const [selectedGenres, setSelectedGenres] = useState([]); // Para guardar os IDs selecionados
     
-    const [message, setMessage] = useState('');
-    const navigate = useNavigate();
+    const [message, setMessage] = useState(''); //
+    const navigate = useNavigate(); //
 
-    const handleSubmit = async (e) => {
+    // --- NOVO useEffect para buscar os gêneros ---
+    useEffect(() => {
+        const fetchGenres = async () => {
+            try {
+                const res = await axios.get('http://localhost:3001/api/genres');
+                setAllGenres(res.data);
+            } catch (error) {
+                console.error("Erro ao buscar gêneros:", error);
+                setMessage("Erro ao carregar lista de gêneros.");
+            }
+        };
+        fetchGenres();
+    }, []); // Executa só uma vez
+
+    // --- NOVA Função para lidar com a seleção de gêneros ---
+    const handleGenreChange = (e) => {
+        const genreId = parseInt(e.target.value);
+        if (e.target.checked) {
+            // Adiciona o ID ao array
+            setSelectedGenres(prev => [...prev, genreId]);
+        } else {
+            // Remove o ID do array
+            setSelectedGenres(prev => prev.filter(id => id !== genreId));
+        }
+    };
+
+    const handleSubmit = async (e) => { //
         e.preventDefault();
         
-        // 2. Remover o 'FormData'
-        // const formData = new FormData(); ... (Linhas antigas)
-
-        // 3. Criar um objeto JSON simples
         const newBook = {
             titulo,
             autor,
             sinopse,
-            capa // Envia a URL da capa
+            capa,
+            generos: selectedGenres // <<< ENVIA O ARRAY DE IDs
         };
 
         try {
             const token = localStorage.getItem('token');
-            
-            // 4. Enviar o objeto 'newBook' como dados
-            // 5. Remover o header 'Content-Type: multipart/form-data'
-            //    (Axios usará 'application/json' por padrão)
-            const res = await axios.post('http://localhost:3001/api/books', newBook, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const res = await axios.post('http://localhost:3001/api/books', newBook, { //
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             
-            setMessage('Livro adicionado com sucesso! Redirecionando...');
-            setTimeout(() => navigate(`/book/${res.data.id}`), 2000);
+            setMessage('Livro adicionado com sucesso! Redirecionando...'); //
+            setTimeout(() => navigate(`/book/${res.data.id}`), 2000); //
         } catch (err) {
-            setMessage(err.response?.data?.message || 'Erro ao adicionar livro.');
+            setMessage(err.response?.data?.message || 'Erro ao adicionar livro.'); //
         }
     };
 
@@ -51,6 +71,8 @@ const AddBookPage = () => {
         <div className="admin-form-container">
             <h2>Adicionar Novo Livro</h2>
             <form onSubmit={handleSubmit}>
+                
+                {/* --- AQUI ESTÃO OS INPUTS QUE FALTAVAM --- */}
                 <div className="form-group">
                     <label>Título</label>
                     <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} required />
@@ -63,8 +85,6 @@ const AddBookPage = () => {
                     <label>Sinopse</label>
                     <textarea value={sinopse} onChange={e => setSinopse(e.target.value)} required />
                 </div>
-                
-                {/* 6. Mudar o input de 'file' para 'url' (ou 'text') */}
                 <div className="form-group">
                     <label>URL da Capa do Livro</label>
                     <input 
@@ -74,6 +94,28 @@ const AddBookPage = () => {
                         onChange={e => setCapa(e.target.value)} 
                         required 
                     />
+                </div>
+                {/* --- FIM DOS INPUTS QUE FALTAVAM --- */}
+
+
+                {/* --- NOVO CAMPO DE GÊNEROS --- */}
+                <div className="form-group">
+                    <label>Gêneros</label>
+                    <div className="checkbox-group">
+                        {allGenres.length > 0 ? allGenres.map(genre => (
+                            <label key={genre.id}>
+                                <input 
+                                    type="checkbox" 
+                                    value={genre.id}
+                                    onChange={handleGenreChange}
+                                    checked={selectedGenres.includes(genre.id)}
+                                />
+                                {genre.nome}
+                            </label>
+                        )) : (
+                            <p>Carregando gêneros...</p>
+                        )}
+                    </div>
                 </div>
                 
                 <button type="submit" className="submit-btn">Adicionar Livro</button>

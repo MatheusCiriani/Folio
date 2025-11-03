@@ -1,3 +1,4 @@
+// pages/EditBookPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -8,48 +9,67 @@ const EditBookPage = () => {
     const [titulo, setTitulo] = useState('');
     const [autor, setAutor] = useState('');
     const [sinopse, setSinopse] = useState('');
-    
-    // 1. Mude o estado da capa para string
     const [capa, setCapa] = useState('');
+    
+    // --- NOVOS ESTADOS ---
+    const [allGenres, setAllGenres] = useState([]);
+    const [selectedGenres, setSelectedGenres] = useState([]);
+
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchBook = async () => {
+        const fetchBookAndGenres = async () => {
             try {
-                const res = await axios.get(`http://localhost:3001/api/books/${id}`);
-                const book = res.data;
+                // 1. Busca os gêneros
+                const genresRes = await axios.get('http://localhost:3001/api/genres');
+                setAllGenres(genresRes.data);
+
+                // 2. Busca o livro (que agora inclui os gêneros dele)
+                const bookRes = await axios.get(`http://localhost:3001/api/books/${id}`);
+                const book = bookRes.data;
                 setTitulo(book.titulo);
                 setAutor(book.autor);
                 setSinopse(book.sinopse);
+                setCapa(book.capa);
                 
-                // 2. Defina o estado da capa com a URL
-                setCapa(book.capa); 
+                // 3. Define os gêneros que já vêm marcados
+                // A API (modificada) retorna book.generos = [{id: 1, nome: 'Ficção'}, ...]
+                setSelectedGenres(book.generos.map(g => g.id));
+
             } catch (error) {
-                setMessage('Erro ao carregar dados do livro.');
+                setMessage('Erro ao carregar dados do livro ou gêneros.');
             }
         };
-        fetchBook();
+        fetchBookAndGenres();
     }, [id]);
+
+    // --- NOVA Função para lidar com a seleção de gêneros ---
+    const handleGenreChange = (e) => {
+        const genreId = parseInt(e.target.value);
+        if (e.target.checked) {
+            setSelectedGenres(prev => [...prev, genreId]);
+        } else {
+            setSelectedGenres(prev => prev.filter(id => id !== genreId));
+        }
+    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 3. Envie um objeto JSON, não FormData
         const updatedBook = {
             titulo,
             autor,
             sinopse,
-            capa
+            capa,
+            generos: selectedGenres // <<< ENVIA O ARRAY DE IDs ATUALIZADO
         };
 
         try {
             const token = localStorage.getItem('token');
-            // 4. Remova o 'Content-Type: multipart/form-data'
             await axios.put(`http://localhost:3001/api/books/${id}`, updatedBook, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             setMessage('Livro atualizado com sucesso! Redirecionando...');
             setTimeout(() => navigate(`/book/${id}`), 2000);
@@ -62,26 +82,26 @@ const EditBookPage = () => {
         <div className="admin-form-container">
             <h2>Editar Livro</h2>
             <form onSubmit={handleSubmit}>
-                {/* ... (inputs de titulo, autor, sinopse) ... */}
-                <div className="form-group">
-                    <label>Sinopse</label>
-                    <textarea value={sinopse} onChange={e => setSinopse(e.target.value)} required />
-                </div>
+                {/* ... (inputs de titulo, autor, sinopse, capa) ... */}
                 
-                {/* 5. Mude o input de 'file' para 'url' */}
+                {/* --- NOVO CAMPO DE GÊNEROS --- */}
                 <div className="form-group">
-                    <label>URL da Capa Atual</label>
-                    {/* 6. Exiba a capa diretamente da URL */}
-                    {capa && <img src={capa} alt="Capa atual" style={{ maxWidth: '100px', display: 'block', marginBottom: '10px' }} />}
-                    
-                    <input 
-                        type="url" 
-                        value={capa} 
-                        onChange={e => setCapa(e.target.value)} 
-                        required 
-                    />
+                    <label>Gêneros</label>
+                    <div className="checkbox-group">
+                        {allGenres.map(genre => (
+                            <label key={genre.id}>
+                                <input 
+                                    type="checkbox" 
+                                    value={genre.id}
+                                    onChange={handleGenreChange}
+                                    checked={selectedGenres.includes(genre.id)} // <<< Define se está marcado
+                                />
+                                {genre.nome}
+                            </label>
+                        ))}
+                    </div>
                 </div>
-                
+
                 <button type="submit" className="submit-btn">Salvar Alterações</button>
             </form>
             {message && <p className="message">{message}</p>}

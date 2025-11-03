@@ -206,3 +206,22 @@
 .edit-form .btn-cancel:hover {
     background-color: #e4e6eb;
 }
+
+/* Contêiner para as tags de gênero */
+.genre-tags {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* Centraliza as tags */
+    gap: 8px; /* Espaço entre as tags */
+    margin: 1rem 0; /* Espaço acima e abaixo */
+}
+
+/* A tag individual */
+.genre-tag {
+    background-color: var(--primary-blue); /* Usando sua cor primária */
+    color: white;
+    padding: 5px 12px;
+    border-radius: 15px; /* Deixa arredondado */
+    font-size: 0.9rem;
+    font-weight: 500;
+}
