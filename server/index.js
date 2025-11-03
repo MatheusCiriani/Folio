@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { uploadDir } = require('./config/multer'); // Importa o diretório de uploads
+const dbPoolPromise = require('./db');
 
 // --- Importação das Rotas ---
 const authRoutes = require('./routes/auth');
@@ -38,7 +39,7 @@ app.use('/api/recommendations', recommendationRoutes);
 
 // --- Função para Criar Admin (Seed) ---
 // (Deixei aqui, pois é parte da inicialização do app, mas pode ser movido também)
-// const createAdminIfNotExists = async () => {
+// const createAdminIfNotExists = async (pool) => {
 //     try {
 //         const adminEmail = process.env.ADMIN_EMAIL;
 //         const [rows] = await pool.execute("SELECT * FROM users WHERE email = ?", [adminEmail]);
@@ -63,9 +64,28 @@ app.use('/api/recommendations', recommendationRoutes);
 //     }
 // };
 
+const startServer = async () =>{
+    try {
+        console.log('Aguardando conexão com o banco de dados..')
+        const pool = await  dbPoolPromise;
+        console.log('✅ Banco de dados pronto para uso.');
+    
+        // 2. Monta as Rotas da API
+        app.use('/api/auth', authRoutes);
+        app.use('/api/books', bookRoutes);
+        app.use('/api/comments', commentRoutes);
+        app.use('/api/users', userRoutes);
+        app.use('/api/recommendations', recommendationRoutes);
+    
+        // 3. Iniciar o Servidor ---
+        app.listen(PORT, async () => {
+            console.log(`🚀 Servidor rodando na porta ${PORT}`);
+            // await createAdminIfNotExists(pool);
+        });
+    } catch (error){
+        console.error("❌ Falha fatal ao iniciar o servidor:", error);
+    }
+}
 
 // --- Iniciar o Servidor ---
-app.listen(PORT, async () => {
-    console.log(`🚀 Servidor rodando na porta ${PORT}`);
-    // await createAdminIfNotExists();
-});
+startServer();
