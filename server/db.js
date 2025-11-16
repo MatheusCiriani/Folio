@@ -1,4 +1,4 @@
-// /Folio/server/db.js
+// server/db.js (Versão Simplificada para Docker)
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 
@@ -8,6 +8,7 @@ const poolConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    charset: 'utf8mb4', // <<< ADICIONE ESTA LINHA
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
