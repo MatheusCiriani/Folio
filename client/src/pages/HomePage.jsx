@@ -20,7 +20,7 @@ const HomePage = () => {
         // 1. Função para buscar os gêneros (para o dropdown)
         const fetchGenres = async () => {
             try {
-                const res = await axios.get('http://localhost:3001/api/genres');
+                const res = await axios.get('/api/genres');
                 setAllGenres(res.data);
             } catch (error) {
                 console.error("Erro ao buscar gêneros:", error);
@@ -38,7 +38,7 @@ const HomePage = () => {
                     params.append('genre', genreFilter);
                 }
                 
-                const res = await axios.get(`http://localhost:3001/api/books?${params.toString()}`);
+                const res = await axios.get(`/api/books?${params.toString()}`);
                 setBooks(res.data);
             } catch (error) {
                 console.error("Erro ao buscar os livros:", error);

@@ -15,7 +15,7 @@ const AddToListModal = ({ closeModal, bookId }) => {
     const fetchMyLists = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:3001/api/lists/', {
+            const res = await axios.get('/api/lists/', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setLists(res.data);
@@ -34,7 +34,7 @@ const AddToListModal = ({ closeModal, bookId }) => {
         setMessage('');
         try {
             await axios.post(
-                `http://localhost:3001/api/lists/${listId}/books`,
+                `/api/lists/${listId}/books`,
                 { bookId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -51,7 +51,7 @@ const AddToListModal = ({ closeModal, bookId }) => {
         try {
             // 1. Cria a lista
             const res = await axios.post(
-                'http://localhost:3001/api/lists/',
+                '/api/lists/',
                 { nome: newListName },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

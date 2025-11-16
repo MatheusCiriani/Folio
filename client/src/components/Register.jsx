@@ -24,7 +24,7 @@ const Register = () => {
         try {
             // ALTERADO: URL da API aponta para a porta 3001
             // ALTERADO: Enviando 'nome' junto com email e senha
-            const res = await axios.post('http://localhost:3001/api/auth/register', {
+            const res = await axios.post('/api/auth/register', {
                 nome,
                 email,
                 senha,

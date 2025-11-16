@@ -65,10 +65,10 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
             const [bookRes, commentsRes, ratingRes, likesRes] = await Promise.all([
-                axios.get(`http://localhost:3001/api/books/${id}`),
-                axios.get(`http://localhost:3001/api/books/${id}/comments`),
-                axios.get(`http://localhost:3001/api/books/${id}/rating`),
-                axios.get(`http://localhost:3001/api/books/${id}/likes`, { headers })
+                axios.get(`/api/books/${id}`),
+                axios.get(`/api/books/${id}/comments`),
+                axios.get(`/api/books/${id}/rating`),
+                axios.get(`/api/books/${id}/likes`, { headers })
             ]);
 
             setBook(bookRes.data);
@@ -133,7 +133,7 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
 
         try {
             await axios.post(
-                `http://localhost:3001/api/books/${id}/review`,
+                `/api/books/${id}/review`,
                 { texto: newComment, nota: newRating },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -157,7 +157,7 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
 
         try {
             const response = await axios.post(
-                `http://localhost:3001/api/books/${id}/like`,
+                `/api/books/${id}/like`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -181,7 +181,7 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
 
         try {
             await axios.post(
-                `http://localhost:3001/api/comments/${commentId}/like`,
+                `/api/comments/${commentId}/like`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -237,7 +237,7 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
         e.preventDefault();
         try {
             await axios.put(
-                `http://localhost:3001/api/comments/${editingCommentId}`,
+                `/api/comments/${editingCommentId}`,
                 { texto: editText, nota: editRating },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -259,7 +259,7 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
 
         try {
             await axios.delete(
-                `http://localhost:3001/api/comments/${commentToDelete}`,
+                `/api/comments/${commentToDelete}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setCommentToDelete(null); // Fecha o modal

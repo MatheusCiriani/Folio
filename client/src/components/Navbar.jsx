@@ -81,7 +81,7 @@ const Navbar = ({ openAuthModal }) => {
         try {
             const tokenToBlacklist = localStorage.getItem('token');
             await axios.post(
-                'http://localhost:3001/api/auth/logout', 
+                '/api/auth/logout', 
                 {}, 
                 { headers: { 'Authorization': `Bearer ${tokenToBlacklist}` } }
             );

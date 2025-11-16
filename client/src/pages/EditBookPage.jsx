@@ -22,11 +22,11 @@ const EditBookPage = () => {
         const fetchBookAndGenres = async () => {
             try {
                 // 1. Busca todos os gêneros
-                const genresRes = await axios.get('http://localhost:3001/api/genres');
+                const genresRes = await axios.get('/api/genres');
                 setAllGenres(genresRes.data);
 
                 // 2. Busca os dados do livro
-                const bookRes = await axios.get(`http://localhost:3001/api/books/${id}`);
+                const bookRes = await axios.get(`/api/books/${id}`);
                 const book = bookRes.data;
                 
                 // 3. Preenche todos os estados
@@ -70,7 +70,7 @@ const EditBookPage = () => {
 
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:3001/api/books/${id}`, updatedBook, {
+            await axios.put(`/api/books/${id}`, updatedBook, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             setMessage('Livro atualizado com sucesso! Redirecionando...');

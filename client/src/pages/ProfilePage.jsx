@@ -32,10 +32,10 @@ const ProfilePage = ({ openCreateListModal, openListDetailModal, openConfirmDele
 
             // Busca tudo em paralelo
             const [profileRes, booksRes, followingRes, listsRes] = await Promise.all([
-                axios.get(`http://localhost:3001/api/users/me`, config),
-                axios.get(`http://localhost:3001/api/users/${userId}/liked-books`),
-                axios.get(`http://localhost:3001/api/users/me/following`, config),
-                axios.get(`http://localhost:3001/api/lists/`, config) // Busca as listas
+                axios.get(`/api/users/me`, config),
+                axios.get(`/api/users/${userId}/liked-books`),
+                axios.get(`/api/users/me/following`, config),
+                axios.get(`/api/lists/`, config) // Busca as listas
             ]);
 
             setUser(profileRes.data);
@@ -59,7 +59,7 @@ const ProfilePage = ({ openCreateListModal, openListDetailModal, openConfirmDele
         e.preventDefault();
         try {
             const res = await axios.put(
-                'http://localhost:3001/api/users/me',
+                '/api/users/me',
                 { nome },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -79,7 +79,7 @@ const ProfilePage = ({ openCreateListModal, openListDetailModal, openConfirmDele
     // Função de Deleção
     const handleDeleteList = async (listId) => {
         try {
-            await axios.delete(`http://localhost:3001/api/lists/${listId}`, {
+            await axios.delete(`/api/lists/${listId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchMyProfile(); // Recarrega o perfil para atualizar a lista

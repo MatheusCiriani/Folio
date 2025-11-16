@@ -19,11 +19,11 @@ const UserProfileModal = ({ userId, closeModal, openListDetailModal }) => {
             try {
                 // Rota de listas públicas que criamos em users.js
                 const [profileRes, booksRes, listsRes] = await Promise.all([
-                    axios.get(`http://localhost:3001/api/users/${userId}/profile`, {
+                    axios.get(`/api/users/${userId}/profile`, {
                         headers: { Authorization: `Bearer ${token}` }
                     }),
-                    axios.get(`http://localhost:3001/api/users/${userId}/liked-books`),
-                    axios.get(`http://localhost:3001/api/users/${userId}/lists`) // <<< NOVA CHAMADA
+                    axios.get(`/api/users/${userId}/liked-books`),
+                    axios.get(`/api/users/${userId}/lists`) // <<< NOVA CHAMADA
                 ]);
 
                 setProfile(profileRes.data);
@@ -43,7 +43,7 @@ const UserProfileModal = ({ userId, closeModal, openListDetailModal }) => {
 
     const handleFollowToggle = async () => {
         try {
-            const url = `http://localhost:3001/api/users/${userId}/follow`;
+            const url = `/api/users/${userId}/follow`;
             const config = { headers: { Authorization: `Bearer ${token}` } };
 
             if (isFollowing) {

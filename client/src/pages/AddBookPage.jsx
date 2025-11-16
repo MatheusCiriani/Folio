@@ -21,7 +21,7 @@ const AddBookPage = () => {
     useEffect(() => {
         const fetchGenres = async () => {
             try {
-                const res = await axios.get('http://localhost:3001/api/genres');
+                const res = await axios.get('/api/genres');
                 setAllGenres(res.data);
             } catch (error) {
                 console.error("Erro ao buscar gêneros:", error);
@@ -56,7 +56,7 @@ const AddBookPage = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:3001/api/books', newBook, { //
+            const res = await axios.post('/api/books', newBook, { //
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             

@@ -26,10 +26,10 @@ const CreateListModal = ({ closeModal, onListCreated, listToEdit }) => {
             
             if (listToEdit) {
                 // Modo Edição
-                await axios.put(`http://localhost:3001/api/lists/${listToEdit.id}`, { nome }, config);
+                await axios.put(`/api/lists/${listToEdit.id}`, { nome }, config);
             } else {
                 // Modo Criação
-                await axios.post('http://localhost:3001/api/lists/', { nome }, config);
+                await axios.post('/api/lists/', { nome }, config);
             }
             
             onListCreated(); // Diz à página pai (ProfilePage) para recarregar as listas

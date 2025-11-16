@@ -18,7 +18,7 @@ const ListDetailModal = ({ listId, closeModal }) => {
     const fetchListDetails = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:3001/api/lists/${listId}/books`, {
+            const res = await axios.get(`/api/lists/${listId}/books`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setList(res.data);
@@ -43,7 +43,7 @@ const ListDetailModal = ({ listId, closeModal }) => {
         setIsSearching(true);
         try {
             // Chama a rota que modificamos no Passo 1
-            const res = await axios.get(`http://localhost:3001/api/books?search=${term}`, {
+            const res = await axios.get(`/api/books?search=${term}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setSearchResults(res.data);
@@ -59,7 +59,7 @@ const ListDetailModal = ({ listId, closeModal }) => {
         try {
             // Chama a rota POST que já existe em lists.js
             await axios.post(
-                `http://localhost:3001/api/lists/${listId}/books`,
+                `/api/lists/${listId}/books`,
                 { bookId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
