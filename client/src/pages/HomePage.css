@@ -107,7 +107,7 @@
     box-shadow: 0 4px 15px rgba(0, 123, 255, 0.1);
     transition: all 0.2s ease;
     
-    /* Aparência personalizada da seta (opcional, mas fica melhor) */
+    /* Aparência personalizada da seta */
     appearance: none; 
     -webkit-appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23007bff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
@@ -185,9 +185,19 @@
     gap: 20px;
 }
 
+/* Wrapper do Item (para segurar capa e botão) */
+.poster-item {
+    position: relative;
+    transition: transform 0.2s;
+}
+.poster-item:hover {
+    transform: translateY(-5px);
+    z-index: 2; /* Garante que o item fique por cima ao dar hover */
+}
+
 .poster-card {
     display: block;
-    transition: transform 0.2s;
+    height: 100%; /* Ocupa altura total */
 }
 
 .poster-wrapper {
@@ -225,11 +235,42 @@
     letter-spacing: 0.5px;
 }
 
-.poster-card:hover {
-    transform: translateY(-5px);
-}
 .poster-card:hover .poster-hover {
     opacity: 1;
+}
+
+/* --- BOTÃO DE EDITAR (Flutuante) --- */
+.poster-edit-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: white;
+    color: var(--text-main);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 10; /* Fica acima da capa e do hover */
+    text-decoration: none;
+    opacity: 0; /* Escondido por padrão */
+    transform: scale(0.8);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Mostra o botão quando passa o mouse no ITEM (wrapper pai) */
+.poster-item:hover .poster-edit-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.poster-edit-btn:hover {
+    background-color: var(--primary-blue);
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
 }
 
 .empty-state-container {
@@ -238,5 +279,5 @@
     padding: 40px;
     color: #667788;
     font-size: 1.1rem;
-    grid-column: 1 / -1; /* Ocupa toda a largura do grid */
+    grid-column: 1 / -1; 
 }

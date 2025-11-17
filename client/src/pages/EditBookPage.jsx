@@ -1,8 +1,7 @@
-// pages/EditBookPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
-import './AdminForms.css'; //
+import './AdminForms.css'; 
 
 const EditBookPage = () => {
     const { id } = useParams();
@@ -11,7 +10,6 @@ const EditBookPage = () => {
     const [sinopse, setSinopse] = useState('');
     const [capa, setCapa] = useState('');
     
-    // Estados para os gêneros
     const [allGenres, setAllGenres] = useState([]);
     const [selectedGenres, setSelectedGenres] = useState([]);
 
@@ -36,16 +34,19 @@ const EditBookPage = () => {
                 setCapa(book.capa);
                 
                 // 4. Preenche os gêneros que já estavam selecionados
-                setSelectedGenres(book.generos.map(g => g.id));
+                // (Assumindo que a API retorna um array de objetos em book.generos)
+                if (book.generos) {
+                    setSelectedGenres(book.generos.map(g => g.id));
+                }
 
             } catch (error) {
+                console.error(error);
                 setMessage('Erro ao carregar dados do livro ou gêneros.');
             }
         };
         fetchBookAndGenres();
     }, [id]);
 
-    // Função para lidar com a seleção de gêneros
     const handleGenreChange = (e) => {
         const genreId = parseInt(e.target.value);
         if (e.target.checked) {
@@ -55,11 +56,9 @@ const EditBookPage = () => {
         }
     };
 
-
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Monta o objeto com todos os dados
         const updatedBook = {
             titulo,
             autor,
@@ -81,57 +80,94 @@ const EditBookPage = () => {
     };
 
     return (
-        <div className="admin-form-container">
-            <h2>Editar Livro</h2>
-            <form onSubmit={handleSubmit}>
-                
-                {/* --- CAMPOS QUE FALTAVAM --- */}
-                <div className="form-group">
-                    <label>Título</label>
-                    <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                    <label>Autor</label>
-                    <input type="text" value={autor} onChange={e => setAutor(e.target.value)} required />
-                </div>
-                {/* --- FIM DOS CAMPOS QUE FALTAVAM --- */}
-
-                <div className="form-group">
-                    <label>Sinopse</label>
-                    <textarea value={sinopse} onChange={e => setSinopse(e.target.value)} required />
-                </div>
-                
-                <div className="form-group">
-                    <label>URL da Capa Atual</label>
-                    {capa && <img src={capa} alt="Capa atual" style={{ maxWidth: '100px', display: 'block', marginBottom: '10px' }} />}
-                    <input 
-                        type="url" 
-                        value={capa} 
-                        onChange={e => setCapa(e.target.value)} 
-                        required 
-                    />
-                </div>
-                
-                <div className="form-group">
-                    <label>Gêneros</label>
-                    <div className="checkbox-group">
-                        {allGenres.map(genre => (
-                            <label key={genre.id}>
+        <div className="admin-page-wrapper">
+            <div className="admin-backdrop"></div>
+            
+            <div className="admin-content container">
+                <div className="admin-form-card">
+                    <h2 className="form-title">Editar Livro</h2>
+                    <p className="form-subtitle">Atualize as informações da obra abaixo.</p>
+                    
+                    <form onSubmit={handleSubmit}>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Título</label>
                                 <input 
-                                    type="checkbox" 
-                                    value={genre.id}
-                                    onChange={handleGenreChange}
-                                    checked={selectedGenres.includes(genre.id)} // Define se está marcado
+                                    type="text" 
+                                    value={titulo} 
+                                    onChange={e => setTitulo(e.target.value)} 
+                                    required 
                                 />
-                                {genre.nome}
-                            </label>
-                        ))}
-                    </div>
-                </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Autor</label>
+                                <input 
+                                    type="text" 
+                                    value={autor} 
+                                    onChange={e => setAutor(e.target.value)} 
+                                    required 
+                                />
+                            </div>
+                        </div>
 
-                <button type="submit" className="submit-btn">Salvar Alterações</button>
-            </form>
-            {message && <p className="message">{message}</p>}
+                        <div className="form-group">
+                            <label>Sinopse</label>
+                            <textarea 
+                                value={sinopse} 
+                                onChange={e => setSinopse(e.target.value)} 
+                                required 
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>URL da Capa</label>
+                            <input 
+                                type="url" 
+                                value={capa} 
+                                onChange={e => setCapa(e.target.value)} 
+                                required 
+                            />
+                            {capa && (
+                                <div className="preview-capa">
+                                    <span>Capa Atual:</span>
+                                    <img 
+                                        src={capa} 
+                                        alt="Capa atual" 
+                                        onError={(e) => e.target.style.display='none'}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Gêneros</label>
+                            <div className="genres-grid">
+                                {allGenres.length > 0 ? allGenres.map(genre => (
+                                    <label 
+                                        key={genre.id} 
+                                        className={`genre-checkbox ${selectedGenres.includes(genre.id) ? 'selected' : ''}`}
+                                    >
+                                        <input 
+                                            type="checkbox" 
+                                            value={genre.id}
+                                            onChange={handleGenreChange}
+                                            checked={selectedGenres.includes(genre.id)} 
+                                        />
+                                        {genre.nome}
+                                    </label>
+                                )) : (
+                                    <p>Carregando gêneros...</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <button type="submit" className="submit-btn-admin">Salvar Alterações</button>
+                    </form>
+                    
+                    {message && <p className={`form-message ${message.includes('sucesso') ? 'success' : 'error'}`}>{message}</p>}
+                </div>
+            </div>
         </div>
     );
 };

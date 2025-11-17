@@ -9,12 +9,15 @@ const HomePage = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
+    // --- RECUPERA O USUÁRIO (Para mostrar o botão de editar se logado) ---
+    const user = JSON.parse(localStorage.getItem('usuarios'));
+
     // --- ESTADOS DO FILTRO ---
     const [allGenres, setAllGenres] = useState([]);
     const [genreFilter, setGenreFilter] = useState('');
 
     useEffect(() => {
-        // 1. Busca Gêneros
+        // 1. Busca Gêneros para o Select
         const fetchGenres = async () => {
             try {
                 const res = await axios.get('/api/genres');
@@ -32,6 +35,7 @@ const HomePage = () => {
             try {
                 setLoading(true);
                 const params = new URLSearchParams();
+                // Se houver um gênero selecionado, envia para a API
                 if (genreFilter) {
                     params.append('genre', genreFilter);
                 }
@@ -46,8 +50,15 @@ const HomePage = () => {
         };
 
         fetchBooks();
-    }, [genreFilter]); // Recarrega quando o gênero muda
+    }, [genreFilter]); 
 
+    // --- FUNÇÃO DE RESET (Botão "Ver todos") ---
+    const handleResetFilters = () => {
+        setGenreFilter(''); // Volta o select para "Todos"
+        setSearchTerm('');  // Limpa o texto da busca
+    };
+
+    // Filtragem local por texto (Título ou Autor)
     const filteredBooks = books.filter(book => 
         book.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         book.autor.toLowerCase().includes(searchTerm.toLowerCase())
@@ -107,27 +118,52 @@ const HomePage = () => {
                             ? `Gênero: ${allGenres.find(g => g.id.toString() === genreFilter)?.nome}` 
                             : 'Livros Populares'}
                     </h2>
-                    <Link to="/explore" className="section-header-btn">
+                    
+                    {/* Botão Funcional de Resetar Filtros */}
+                    <button onClick={handleResetFilters} className="section-header-btn">
                         Ver todos
-                    </Link>
+                    </button>
                 </div>
 
                 {loading ? <p>Carregando estante...</p> : (
                     <div className="poster-grid">
                         {filteredBooks.length > 0 ? (
                             filteredBooks.slice(0, 12).map(book => (
-                                <Link to={`/book/${book.id}`} key={book.id} className="poster-card">
-                                    <div className="poster-wrapper">
-                                        <img src={book.capa} alt={book.titulo} />
-                                        <div className="poster-hover">
-                                            <span>Ver detalhes</span>
+                                /* Wrapper do Item */
+                                <div key={book.id} className="poster-item">
+                                    
+                                    {/* Link Principal (Capa) */}
+                                    <Link to={`/book/${book.id}`} className="poster-card">
+                                        <div className="poster-wrapper">
+                                            <img src={book.capa} alt={book.titulo} />
+                                            <div className="poster-hover">
+                                                <span>Ver detalhes</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </Link>
+                                    </Link>
+
+                                    {/* Botão de Editar (Visível apenas para usuários logados) */}
+                                    {user && (
+                                        <Link 
+                                            to={`/admin/edit-book/${book.id}`} 
+                                            className="poster-edit-btn"
+                                            title="Editar Livro"
+                                        >
+                                            ✎
+                                        </Link>
+                                    )}
+                                </div>
                             ))
                         ) : (
                             <div className="empty-state-container">
                                 <p>Nenhum livro encontrado.</p>
+                                <button 
+                                    onClick={handleResetFilters} 
+                                    className="section-header-btn" 
+                                    style={{marginTop: '10px'}}
+                                >
+                                    Limpar filtros
+                                </button>
                             </div>
                         )}
                     </div>
