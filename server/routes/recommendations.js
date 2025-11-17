@@ -1,5 +1,5 @@
 const express = require('express');
-const pool = require('../db');
+const poolPromise = require('../db');
 const { authMiddleware } = require('../authMiddleware');
 
 const router = express.Router();
@@ -8,6 +8,8 @@ const router = express.Router();
 // POST /api/recommendations -> POST /
 router.post('/', authMiddleware, async (req, res) => {
     try {
+
+        const pool = await poolPromise; // <<< 2. ADICIONE O AWAIT
         const usuario_origem_id = req.user.id;
         const { livro_id, usuario_destino_id } = req.body; 
         if (!livro_id || !usuario_destino_id) {
@@ -42,6 +44,8 @@ router.post('/', authMiddleware, async (req, res) => {
 // GET /api/recommendations/received -> GET /received
 router.get('/received', authMiddleware, async (req, res) => {
     try {
+
+        const pool = await poolPromise; // <<< 2. ADICIONE O AWAIT
         const usuario_destino_id = req.user.id;
         const [rows] = await pool.execute(
             `SELECT 

@@ -1,7 +1,7 @@
 /* --- Estilos da Página de Detalhes (de App.css) --- */
 .book-detail-container {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 2.5fr 2.5fr;
     gap: 3rem;
     margin-top: 2rem;
     align-items: flex-start;

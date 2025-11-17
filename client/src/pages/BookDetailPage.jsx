@@ -163,9 +163,13 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
             );
 
             // Atualiza estados baseado na resposta
-            setUserLiked(response.data.liked);
-            // Recarrega contagem e comentários/avaliações atualizadas
-            fetchBookDetails();
+            // setUserLiked(response.data.liked);
+            // // Recarrega contagem e comentários/avaliações atualizadas
+            // fetchBookDetails();
+
+            const { liked } = response.data;
+            setUserLiked(liked);
+            setLikes(prevLikes => liked ? prevLikes + 1 : prevLikes - 1);
         } catch (err) {
             console.error('Erro ao curtir livro:', err);
             alert('Não foi possível curtir o livro.');
@@ -180,14 +184,31 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
         }
 
         try {
-            await axios.post(
+            const res = await axios.post(
                 `/api/comments/${commentId}/like`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             // Atualiza os comentários e suas curtidas
-            fetchBookDetails();
+            // fetchBookDetails();
+
+            // --- ATUALIZAÇÃO LOCAL ---
+            // Atualiza apenas o comentário específico no estado
+            const { liked } = res.data;
+            setComments(prevComments => 
+                prevComments.map(comment => {
+                    if (comment.id === commentId) {
+                        return {
+                            ...comment,
+                            curtidas: liked ? comment.curtidas + 1 : comment.curtidas - 1,
+                            userLiked: liked
+                        };
+                    }
+                    return comment;
+                })
+            );
+            // --- FIM DA ATUALIZAÇÃO ---
         } catch (err) {
             console.error('Erro ao curtir comentário:', err);
             alert('Não foi possível curtir o comentário.');

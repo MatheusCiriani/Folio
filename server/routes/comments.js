@@ -1,5 +1,5 @@
 const express = require('express');
-const pool = require('../db');
+const poolPromise = require('../db');
 const jwt = require('jsonwebtoken');
 const { authMiddleware } = require('../authMiddleware');
 
@@ -9,6 +9,8 @@ const router = express.Router();
 // PUT /api/comments/:commentId -> PUT /:commentId
 router.put('/:commentId', authMiddleware, async (req, res) => {
     try {
+
+        const pool = await poolPromise; // <<< 2. ADICIONE O AWAIT
         const { commentId } = req.params;
         const { id: usuario_id } = req.user;
         const { texto, nota } = req.body;
@@ -36,6 +38,8 @@ router.put('/:commentId', authMiddleware, async (req, res) => {
 // DELETE /api/comments/:commentId -> DELETE /:commentId
 router.delete('/:commentId', authMiddleware, async (req, res) => {
     try {
+
+        const pool = await poolPromise; // <<< 2. ADICIONE O AWAIT
         const { commentId } = req.params;
         const { id: usuario_id } = req.user;
         const [rows] = await pool.execute('SELECT * FROM comentarios WHERE id = ?', [commentId]);
@@ -62,6 +66,8 @@ router.delete('/:commentId', authMiddleware, async (req, res) => {
 // POST /api/comments/:id/like -> POST /:id/like
 router.post('/:id/like', authMiddleware, async (req, res) => {
     try {
+
+        const pool = await poolPromise; // <<< 2. ADICIONE O AWAIT
         const { id: comentario_id } = req.params;
         const { id: usuario_id } = req.user;
         const [rows] = await pool.execute(
@@ -85,6 +91,8 @@ router.post('/:id/like', authMiddleware, async (req, res) => {
 // GET /api/comments/:id/likes -> GET /:id/likes
 router.get('/:id/likes', async (req, res) => {
     try {
+
+        const pool = await poolPromise; // <<< 2. ADICIONE O AWAIT
         const { id: comentario_id } = req.params;
         const [countRows] = await pool.execute(
             'SELECT COUNT(*) AS totalCurtidas FROM curtidas WHERE comentario_id = ?',
