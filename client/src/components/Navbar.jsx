@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import folioLogo from '../assets/folio-logo.jpeg'; 
+// IMPORTANTE: Certifique-se de que o arquivo folio-logo-navbar.svg está na pasta assets
+import folioLogoNavbar from '../assets/folio-logo-navbar.svg'; 
 import './Navbar.css';
 
 // --- Ícones (Hamburger e User) ---
-// (O código dos seus ícones SVG permanece aqui, sem alteração)
-
-// Componente do Ícone "Sanduíche" (Hamburger)
 const HamburgerIcon = () => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -26,7 +24,6 @@ const HamburgerIcon = () => (
     </svg>
 );
 
-// Componente do Ícone do Usuário (para o menu)
 const UserIcon = () => (
     <svg 
         xmlns="http://www.w3.org/2000/svg" 
@@ -52,7 +49,6 @@ const Navbar = ({ openAuthModal }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null); 
 
-    // Efeito para fechar o dropdown ao clicar fora
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -65,7 +61,6 @@ const Navbar = ({ openAuthModal }) => {
         };
     }, [dropdownRef]); 
 
-    // Efeito para atualizar o nome na navbar (após editar perfil)
     useEffect(() => {
         const handleStorageChange = () => {
             window.location.reload(); 
@@ -76,7 +71,6 @@ const Navbar = ({ openAuthModal }) => {
         };
     }, []);
 
-    // Função de Logout
     const handleLogout = async () => {
         try {
             const tokenToBlacklist = localStorage.getItem('token');
@@ -97,25 +91,21 @@ const Navbar = ({ openAuthModal }) => {
     return (
         <nav className="navbar">
             
-            {/* --- MUDANÇA AQUI --- */}
-            {/* 1. Novo container para agrupar logo e saudação */}
             <div className="navbar-logo-container">
                 <Link to="/" className="navbar-logo">
-                    <img src={folioLogo} alt="Fólio Logo" style={{ width: '80px' }}/>
+                    {/* SVG da Logo */}
+                    <img src={folioLogoNavbar} alt="Fólio" />
                 </Link>
                 
-                {/* 2. Adiciona o link do perfil se o usuário estiver logado */}
                 {token && (
                     <Link to="/profile" className="navbar-user-greeting">
-                        {user?.nome}
+                        Olá, {user?.nome}
                     </Link>
                 )}
             </div>
-            {/* --- FIM DA MUDANÇA --- */}
 
             <div className="navbar-links">
                 {token ? (
-                    // (Menu dropdown da direita - sem alteração)
                     <div className="navbar-profile-menu" ref={dropdownRef}>
                         <button 
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)} 
@@ -127,7 +117,7 @@ const Navbar = ({ openAuthModal }) => {
                         {isDropdownOpen && (
                             <div className="profile-dropdown">
                                 <div className="dropdown-header">
-                                    Olá, {user?.nome}
+                                    Conta de {user?.nome}
                                 </div>
                                 
                                 <Link to="/profile" className="dropdown-item-button">
@@ -147,7 +137,6 @@ const Navbar = ({ openAuthModal }) => {
                         )}
                     </div>
                 ) : (
-                    // (Botões de Entrar/Cadastrar - sem alteração)
                     <>
                         <button onClick={() => openAuthModal('login')}>Entrar</button>
                         <button onClick={() => openAuthModal('register')} className="btn-primary">Cadastrar</button>

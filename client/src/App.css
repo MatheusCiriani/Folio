@@ -1,14 +1,21 @@
-/* --- Layout Principal --- */
+/* src/App.css */
 .App {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
+/* O main agora ocupa 100% por padrão, o padding é controlado internamente nas páginas */
 main {
   flex: 1;
-  padding: 2rem;
+  width: 100%;
+  margin: 0 auto;
+  /* Removemos o padding e max-width globais para permitir o banner full-width */
+}
+
+/* Utilitário para container centralizado (usado dentro das páginas) */
+.container {
   max-width: 1200px;
   margin: 0 auto;
-  width: 100%;
+  padding: 0 20px;
 }

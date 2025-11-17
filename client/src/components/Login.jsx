@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-import folioLogo from '../assets/folio-logo.jpeg'; // Importe seu logo
+import folioLogo from '../assets/folio-logo-hero.svg'; // Importe seu logo
 
 const Login = ({ onLoginSuccess }) => {
     const [formData, setFormData] = useState({

@@ -1,27 +1,37 @@
-/* --- Estilos do Overlay e Conteúdo do Modal --- */
+/* src/components/AuthModal.css */
+
+/* --- Overlay (Fundo Escuro atrás do modal) --- */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 20px;
 }
 
-/* O antigo .auth-container agora é o .modal-content */
+/* --- O Cartão do Modal --- */
 .modal-content {
-  background-color: var(--container-bg);
+  background-color: #ffffff;
   padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   text-align: center;
   position: relative;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .close-button {
@@ -32,87 +42,133 @@
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #aaa;
+  color: #ccc;
+  transition: color 0.2s;
 }
 .close-button:hover {
-    color: #333;
+    color: var(--dark-text);
 }
 
-
-/* --- Estilos do Formulário (do seu App.css original) --- */
-.logo-container {
+/* --- Header do Modal (Logo e Títulos) --- */
+.modal-header {
   margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centraliza o conteúdo do header */
 }
 
-.logo-container img {
-  max-width: 120px;
-  height: auto;
+/* REGRA DE CORREÇÃO DE TAMANHO */
+/* Ataca tanto a classe .auth-logo quanto qualquer imagem dentro do header */
+.modal-header img,
+.auth-logo {
+  width: 120px !important; /* Força o tamanho pequeno */
+  height: auto !important;
+  margin-bottom: 20px;
+  display: block;
+  max-width: 100%;
 }
 
-h2 {
-  margin-bottom: 25px;
-  font-weight: 600;
+.modal-header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
   color: var(--dark-text);
+  margin: 0 0 5px 0;
 }
 
+.modal-subtitle {
+    color: #667788;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* --- Formulário e Inputs Modernos --- */
 .auth-form .form-group {
   margin-bottom: 20px;
   text-align: left;
 }
 
+.auth-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #445566;
+}
+
 .auth-form input {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid var(--input-border);
+  padding: 14px 16px;
+  background-color: #f4f7f9; 
+  border: 2px solid transparent;
   border-radius: 8px;
   font-size: 16px;
-  box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  color: var(--dark-text);
+  transition: all 0.2s ease;
 }
 
+.auth-form input::placeholder {
+    color: #a0b0c0;
+}
+
+/* Efeito de Foco (Borda Azul) */
 .auth-form input:focus {
   outline: none;
+  background-color: #ffffff;
   border-color: var(--primary-blue);
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
 }
 
+/* --- Botão de Ação --- */
 .submit-btn {
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   background-color: var(--primary-blue);
-  color: var(--light-text);
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s, transform 0.1s;
+  margin-top: 10px;
 }
 
 .submit-btn:hover {
   background-color: #0056b3;
+  transform: translateY(-1px);
 }
 
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+/* --- Mensagens de Erro/Sucesso --- */
 .message {
   margin-top: 20px;
   font-weight: 500;
-  padding: 10px;
+  padding: 12px;
   border-radius: 8px;
+  font-size: 0.9rem;
 }
 
 .message.error {
-  color: var(--error-color);
-  background-color: rgba(220, 53, 69, 0.1);
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
 }
 
 .message.success {
-  color: var(--success-color);
-  background-color: rgba(40, 167, 69, 0.1);
+  color: #155724;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
 }
 
+/* --- Link para Alternar (Entrar/Cadastrar) --- */
 .toggle-auth {
   margin-top: 25px;
-  font-size: 14px;
+  font-size: 0.95rem;
+  color: #667788;
 }
 
 .toggle-auth button {
@@ -120,52 +176,9 @@ h2 {
   border: none;
   color: var(--primary-blue);
   cursor: pointer;
-  font-weight: 600;
-  padding: 0;
-  text-decoration: underline;
+  font-weight: 700;
+  padding: 0 0 0 5px;
 }
-
-/* ... (estilos de .modal-overlay e .close-button permanecem os mesmos) */
-
-/* Atualize .modal-content e adicione novos estilos */
-.modal-content {
-  background-color: var(--container-bg);
-  padding: 30px 40px 40px 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  position: relative;
+.toggle-auth button:hover {
+    text-decoration: underline;
 }
-
-.modal-header {
-  margin-bottom: 25px;
-}
-
-.modal-header img {
-  max-width: 80px; /* Ajuste o tamanho do logo */
-  margin-bottom: 15px;
-}
-
-.modal-header h2 {
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: var(--dark-text);
-  margin: 0;
-}
-
-.auth-form .form-group {
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-/* NOVO: Estilo para os labels */
-.auth-form label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    font-size: 0.9rem;
-    color: #555;
-}
-/* ... (Resto dos estilos do formulário que você já tem funcionam bem) */

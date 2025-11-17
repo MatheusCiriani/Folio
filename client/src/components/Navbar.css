@@ -1,15 +1,23 @@
-/* --- Estilos da Navbar (de App.css e index.css) --- */
+/* src/components/Navbar.css */
+
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
-  background-color: var(--container-bg);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 10px 40px;
+  
+  /* Fundo Azul Fólio */
+  background-color: var(--primary-blue); 
+  
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
   width: 100%;
-  border-bottom: 1px solid #eee;
+  border-bottom: none;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
+/* --- LOGO E SAUDAÇÃO --- */
 .navbar-logo-container {
   display: flex;
   flex-direction: column;
@@ -17,61 +25,76 @@
 }
 
 .navbar-logo img {
-  height: 40px; /* Estilo de App.css */
+  height: 40px; /* Altura fixa */
+  display: block;
+  /* Filtro removido conforme solicitado - usa as cores originais do SVG */
 }
 
 .navbar-user-greeting {
-  color: var(--dark-text, #333);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
   margin-top: 4px;
-  transition: color 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 .navbar-user-greeting:hover {
-  color: var(--primary-blue, #007bff);
+  color: #ffffff;
   text-decoration: underline;
+  opacity: 1;
 }
 
+/* --- LINKS E BOTÕES DA DIREITA --- */
 .navbar-links {
   display: flex;
   align-items: center;
-  gap: 1.5rem; /* Estilo de App.css */
+  gap: 1rem;
 }
 
+/* Botão Entrar (Transparente com borda) */
 .navbar-links button {
-  background: none;
-  border: 1px solid #ccc;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: white;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 500;
   transition: all 0.2s ease-in-out;
 }
-.navbar-links button:hover { background-color: #f0f0f0; }
 
-.navbar-links .btn-primary {
-  background-color: var(--primary-blue);
-  color: white;
-  border-color: var(--primary-blue);
+.navbar-links button:hover { 
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #ffffff;
 }
-.navbar-links .btn-primary:hover { background-color: #0056b3; }
 
-/* Botão de Adicionar Livro (do App.css) */
+/* Botão Cadastrar (Fundo Branco, Texto Azul) */
+.navbar-links .btn-primary {
+  background-color: #ffffff;
+  color: var(--primary-blue);
+  border-color: #ffffff;
+  font-weight: 600;
+}
+
+.navbar-links .btn-primary:hover { 
+  background-color: #f0f0f0;
+  color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* --- BOTÃO DE ADICIONAR LIVRO (Admin) --- */
 .btn-admin {
-    background-color: var(--success-color);
+    background-color: rgba(40, 167, 69, 0.9);
     color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    font-weight: 500;
-    transition: background-color 0.2s;
+    border: none !important;
 }
 .btn-admin:hover {
-    background-color: #218838;
+    background-color: #28a745 !important;
 }
 
-
-/* --- Estilos do Dropdown de Perfil (de index.css) --- */
+/* --- ÍCONES E DROPDOWN --- */
 .navbar-profile-menu {
   position: relative;
   display: inline-block;
@@ -81,17 +104,18 @@
   background-color: transparent;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--dark-text);
+  color: white;
 }
 .profile-icon-button:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Dropdown Menu */
 .profile-dropdown {
   position: absolute;
   top: 50px;
@@ -99,19 +123,21 @@
   background-color: var(--container-bg, #ffffff);
   border: 1px solid var(--input-border, #ddd);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 220px;
   z-index: 1000;
   padding: 8px 0;
   display: flex;
   flex-direction: column;
+  color: var(--dark-text);
 }
 
 .dropdown-header {
   padding: 12px 16px;
   font-weight: 600;
-  border-bottom: 1px solid var(--input-border, #eee);
+  border-bottom: 1px solid #eee;
   margin-bottom: 8px;
+  color: var(--dark-text);
 }
 
 .dropdown-item-button {
@@ -122,30 +148,23 @@
   background-color: transparent;
   border: none;
   font-size: 15px;
-  font-family: 'Poppins', sans-serif;
+  color: var(--dark-text);
   cursor: pointer;
   text-decoration: none; 
   align-items: center;
   gap: 10px;
 }
 .dropdown-item-button:hover {
-  background-color: var(--background-color, #f4f7f9);
-}
-.dropdown-item-button span {
-   flex-grow: 1;
+  background-color: #f4f7f9;
 }
 
 .dropdown-item-logout {
   color: var(--error-color, #dc3545) !important;
   margin-top: 8px;
-  border-top: 1px solid var(--input-border, #eee);
+  border-top: 1px solid #eee;
 }
 
 .dropdown-item-add {
   color: var(--success-color, #28a745) !important; 
   font-weight: 600;
-}
-.dropdown-item-add:hover {
-  color: var(--success-color, #28a745) !important;
-  background-color: rgba(40, 167, 69, 0.1) !important;
 }

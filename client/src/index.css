@@ -1,19 +1,29 @@
-/* Importando uma fonte moderna do Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap');
 
-/* Variáveis de Cor para fácil manutenção */
 :root {
+  /* Paleta Fólio (Blue & Black Theme) */
   --primary-blue: #007bff;
-  --dark-text: #333;
-  --light-text: #f8f9fa;
-  --input-border: #ced4da;
-  --background-color: #f4f7f9;
-  --container-bg: #ffffff;
-  --error-color: #dc3545;
+  --primary-hover: #0056b3;
+  
+  --dark-bg: #0b1116; /* Fundo quase preto (estilo Letterboxd, mas azulado) */
+  --header-bg: #141c24; /* Header um pouco mais claro */
+  --card-bg: #ffffff;
+  
+  --text-main: #141c24;
+  --text-muted: #667788;
+  --text-light: #f8f9fa;
+
+  --border-color: #e1e8ed;
+  
   --success-color: #28a745;
+  --error-color: #dc3545;
+  
+  /* Sombras Suaves */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-/* Reset básico e estilos globais do body */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -22,13 +32,24 @@
 
 body {
   font-family: 'Poppins', sans-serif;
-  background-color: var(--background-color);
-  color: var(--dark-text);
+  background-color: #f4f7f9; /* Fundo geral claro */
+  color: var(--text-main);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Títulos com fonte Serifada para dar o ar de "Livro" */
+h1, h2, h3 {
+  font-family: 'Poppins', sans-serif; /* Ou 'Merriweather' se quiser mais clássico */
+  font-weight: 700;
+  color: var(--text-main);
 }
 
 a {
   text-decoration: none;
   color: inherit;
+  transition: color 0.2s;
+}
+
+button {
+  font-family: 'Poppins', sans-serif;
 }
