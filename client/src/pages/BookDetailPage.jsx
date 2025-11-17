@@ -1,25 +1,27 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import ConfirmModal from '../components/ConfirmModal'; // <<< IMPORTE O NOVO COMPONENTE
+import ConfirmModal from '../components/ConfirmModal';
 import UserProfileModal from '../components/UserProfileModal';
 import './BookDetailPage.css';
 
-// Componente para as estrelas
-const StarRating = ({ rating, setRating }) => {
+// Componente de Estrelas (Reutilizável e Ajustável)
+const StarRating = ({ rating, setRating, readOnly = false, size = 'medium' }) => {
     const [hover, setHover] = useState(0);
     return (
-        <div className="star-rating">
+        <div className={`star-rating ${size} ${readOnly ? 'readonly' : ''}`}>
             {[...Array(5)].map((star, index) => {
                 const ratingValue = index + 1;
                 return (
                     <span
                         key={index}
                         className="star"
-                        style={{ color: ratingValue <= (hover || rating) ? "#f5c518" : "#ccc" }}
-                        onClick={() => setRating(ratingValue)}
-                        onMouseEnter={() => setHover(ratingValue)}
-                        onMouseLeave={() => setHover(0)}
+                        style={{ 
+                            color: ratingValue <= (hover || rating) ? "#f5c518" : "#e4e5e9" 
+                        }}
+                        onClick={() => !readOnly && setRating && setRating(ratingValue)}
+                        onMouseEnter={() => !readOnly && setHover(ratingValue)}
+                        onMouseLeave={() => !readOnly && setHover(0)}
                     >
                         &#9733;
                     </span>
@@ -28,7 +30,6 @@ const StarRating = ({ rating, setRating }) => {
         </div>
     );
 };
-
 
 const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal }) => {
     const { id } = useParams();
@@ -42,13 +43,9 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
     const [newRating, setNewRating] = useState(0);
     const [userHasReviewed, setUserHasReviewed] = useState(false);
 
-    // --- CORREÇÃO DO LOOP ---
-    // 1. Pegue o token e o user (e seu ID) AQUI FORA.
-    // Assim, 'userId' é um valor primitivo (estável) que podemos usar nos hooks.
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('usuarios'));
-    const userId = user?.id; // Esta é a dependência estável que usaremos
-    // --- FIM DA CORREÇÃO ---
+    const userId = user?.id;
 
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editText, setEditText] = useState('');
@@ -58,7 +55,7 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
     const [userLiked, setUserLiked] = useState(false);
     const [viewingProfileId, setViewingProfileId] = useState(null);
 
-    // --- NOVOS ESTADOS PARA "LER MAIS" ---
+    // Estados para "Ler Mais" da sinopse
     const [isClamped, setIsClamped] = useState(true);
     const [isOverflowing, setIsOverflowing] = useState(false);
     const synopsisRef = useRef(null);
@@ -77,15 +74,12 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
             ]);
 
             setBook(bookRes.data);
-
             const fetchedComments = commentsRes.data;
             
-            // --- CORREÇÃO DO LOOP ---
-            // 2. Use 'userId' (estável) aqui dentro, em vez do objeto 'user'
             if (userId) {
                 let userComment = null;
                 const otherComments = fetchedComments.filter(comment => {
-                    if (comment.usuario_id === userId) { // Usando userId
+                    if (comment.usuario_id === userId) {
                         userComment = comment;
                         return false;
                     }
@@ -103,7 +97,6 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
                 setUserHasReviewed(false);
                 setComments(fetchedComments);
             }
-            // --- FIM DA CORREÇÃO ---
 
             if (ratingRes.data && ratingRes.data.media_avaliacoes !== undefined) {
                 setRating(ratingRes.data);
@@ -120,22 +113,19 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
         } finally {
             setLoading(false);
         }
-    // --- CORREÇÃO DO LOOP ---
-    // 3. Use 'userId' no array de dependências.
     }, [id, token, userId]);
 
     useEffect(() => {
-        // A verificação 'user?.id' garante que o user não é nulo antes de acessar o id
         fetchBookDetails();
     }, [fetchBookDetails]);
 
+    // Efeito para verificar overflow da sinopse
     useEffect(() => {
-        // Verifica se o texto da sinopse está transbordando
         if (synopsisRef.current) {
             const hasOverflow = synopsisRef.current.scrollHeight > synopsisRef.current.clientHeight;
             setIsOverflowing(hasOverflow);
         }
-    }, [book?.sinopse, synopsisRef]); // Roda sempre que o livro (e sua sinopse) mudar
+    }, [book?.sinopse]);
 
     const handleSubmitReview = async (e) => {
         e.preventDefault();
@@ -143,71 +133,38 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
             alert('Por favor, selecione uma nota e escreva um comentário.');
             return;
         }
-
         try {
             await axios.post(
                 `/api/books/${id}/review`,
                 { texto: newComment, nota: newRating },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-
             setNewComment('');
             setNewRating(0);
             fetchBookDetails(); 
-
         } catch (err) {
-            console.error("Erro ao enviar avaliação:", err);
             alert(err.response?.data?.message || "Não foi possível enviar sua avaliação.");
         }
     };
 
-    // --- Função de Curtir / Descurtir ---
     const handleLike = async () => {
-        if (!token) {
-            openAuthModal('login');
-            return;
-        }
-
+        if (!token) { openAuthModal('login'); return; }
         try {
             const response = await axios.post(
-                `/api/books/${id}/like`,
-                {},
-                { headers: { Authorization: `Bearer ${token}` } }
+                `/api/books/${id}/like`, {}, { headers: { Authorization: `Bearer ${token}` } }
             );
-
-            // Atualiza estados baseado na resposta
-            // setUserLiked(response.data.liked);
-            // // Recarrega contagem e comentários/avaliações atualizadas
-            // fetchBookDetails();
-
             const { liked } = response.data;
             setUserLiked(liked);
             setLikes(prevLikes => liked ? prevLikes + 1 : prevLikes - 1);
-        } catch (err) {
-            console.error('Erro ao curtir livro:', err);
-            alert('Não foi possível curtir o livro.');
-        }
+        } catch (err) { console.error(err); }
     };
 
-    // --- Curtir / Descurtir comentário ---
     const handleCommentLike = async (commentId) => {
-        if (!token) {
-            openAuthModal('login');
-            return;
-        }
-
+        if (!token) { openAuthModal('login'); return; }
         try {
             const res = await axios.post(
-                `/api/comments/${commentId}/like`,
-                {},
-                { headers: { Authorization: `Bearer ${token}` } }
+                `/api/comments/${commentId}/like`, {}, { headers: { Authorization: `Bearer ${token}` } }
             );
-
-            // Atualiza os comentários e suas curtidas
-            // fetchBookDetails();
-
-            // --- ATUALIZAÇÃO LOCAL ---
-            // Atualiza apenas o comentário específico no estado
             const { liked } = res.data;
             setComments(prevComments => 
                 prevComments.map(comment => {
@@ -221,52 +178,24 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
                     return comment;
                 })
             );
-            // --- FIM DA ATUALIZAÇÃO ---
-        } catch (err) {
-            console.error('Erro ao curtir comentário:', err);
-            alert('Não foi possível curtir o comentário.');
-        }
+        } catch (err) { console.error(err); }
     };
 
-
-    if (loading) return <p>Carregando...</p>;
-    if (error) return <p>{error}</p>;
-    if (!book) return <p>Livro não encontrado.</p>;
-
-    const coverImageUrl = book.capa ? book.capa : 'caminho/para/imagem/padrao.jpg';
-    const averageRating = rating.total_avaliacoes > 0
-        ? parseFloat(rating.media_avaliacoes).toFixed(1)
-        : '0.0';
-
-    const userCommentStyle = {
-        border: '1px solid var(--primary-blue)',
-        backgroundColor: 'rgba(0, 123, 255, 0.05)',
-        padding: '1.5rem',
-        borderRadius: '8px'
-    };
-
-    // --- NOVAS FUNÇÕES ---
-
+    // Funções de Edição/Lista/Deleção
     const handleEditClick = (comment) => {
         setEditingCommentId(comment.id);
         setEditText(comment.texto);
         setEditRating(comment.nota);
     };
-
     const handleCancelEdit = () => {
         setEditingCommentId(null);
         setEditText('');
         setEditRating(0);
     };
-
     const handleAddToListClick = () => {
-        if (!token) {
-            openAuthModal('login'); // Abre o modal de login se não estiver logado
-        } else {
-            openAddToListModal(book.id); // Abre o modal de adicionar à lista
-        }
+        if (!token) openAuthModal('login'); 
+        else openAddToListModal(book.id);
     };
-
     const handleUpdateReview = async (e) => {
         e.preventDefault();
         try {
@@ -276,202 +205,199 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setEditingCommentId(null);
-            fetchBookDetails(); // Recarrega os dados para mostrar a atualização
-        } catch (err) {
-            console.error("Erro ao atualizar avaliação:", err);
-            alert("Não foi possível atualizar sua avaliação.");
-        }
+            fetchBookDetails(); 
+        } catch (err) { console.error(err); }
     };
-
-    const handleDeleteClick = (commentId) => {
-        setCommentToDelete(commentId);
-    };
-
-    // 2. Executa a exclusão após a confirmação no modal
+    const handleDeleteClick = (commentId) => setCommentToDelete(commentId);
     const handleDeleteConfirm = async () => {
         if (!commentToDelete) return;
-
         try {
-            await axios.delete(
-                `/api/comments/${commentToDelete}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setCommentToDelete(null); // Fecha o modal
-            fetchBookDetails(); // Recarrega os dados para remover o comentário da tela
-        } catch (err) {
-            console.error("Erro ao deletar avaliação:", err);
-            alert("Não foi possível deletar sua avaliação.");
-            setCommentToDelete(null); // Fecha o modal mesmo se der erro
-        }
+            await axios.delete(`/api/comments/${commentToDelete}`, { headers: { Authorization: `Bearer ${token}` } });
+            setCommentToDelete(null); 
+            fetchBookDetails(); 
+        } catch (err) { setCommentToDelete(null); }
     };
 
-    return (
-        <div className="book-detail-container">
-            <div className="book-info">
-                <img src={coverImageUrl} alt={`Capa de ${book.titulo}`} className="book-cover-large" />
-                <h1>{book.titulo}</h1>
-                <h2>por {book.autor}</h2>
-                
-                {book.generos && book.generos.length > 0 && (
-                    <div className="genre-tags">
-                        {book.generos.map(genre => (
-                            <span key={genre.id} className="genre-tag">
-                                {genre.nome}
-                            </span>
-                        ))}
-                    </div>
-                )}
-                
-                {rating.total_avaliacoes > 0 && (
-                    <div className="rating">
-                        <span>⭐ {averageRating} ({rating.total_avaliacoes} avaliações)</span>
-                    </div>
-                )}
-                {/* --- LÓGICA DA SINOPSE "LER MAIS" --- */}
-                <div 
-                    className={`
-                        synopsis-container 
-                        ${isClamped ? 'clamped' : ''} 
-                        ${isOverflowing ? 'is-overflowing' : ''}
-                    `}
-                >
-                    <p className="synopsis-text" ref={synopsisRef}>
-                        {book.sinopse}
-                    </p>
-                </div>
+    if (loading) return <div className="loading-screen"><p>Carregando...</p></div>;
+    if (error) return <div className="error-screen"><p>{error}</p></div>;
+    if (!book) return <div className="error-screen"><p>Livro não encontrado.</p></div>;
 
-                {/* Só mostra o botão se o texto realmente transbordar */}
-                {isOverflowing && (
-                    <div>
+    const coverImageUrl = book.capa ? book.capa : 'https://via.placeholder.com/300x450?text=Sem+Capa';
+    const averageRating = rating.total_avaliacoes > 0 ? parseFloat(rating.media_avaliacoes).toFixed(1) : '0.0';
+
+    return (
+        <div className="book-page-wrapper">
+            {/* Backdrop Azul no Topo */}
+            <div className="book-backdrop"></div>
+
+            {/* Container Principal */}
+            <div className="book-content-container container">
+                
+                {/* --- SIDEBAR (ESQUERDA) --- */}
+                <aside className="book-sidebar">
+                    <div className="book-cover-wrapper">
+                        <img src={coverImageUrl} alt={`Capa de ${book.titulo}`} className="book-cover-img" />
+                    </div>
+                    
+                    <div className="book-actions">
                         <button 
-                            onClick={() => setIsClamped(!isClamped)} 
-                            className="btn-expand-synopsis"
+                            onClick={handleLike} 
+                            className={`action-btn ${userLiked ? 'liked' : ''}`}
                         >
-                            {isClamped ? 'Ler mais' : 'Esconder'}
+                            {userLiked ? '❤️ Curtido' : '🤍 Curtir'} 
+                            <span className="count">({likes})</span>
+                        </button>
+
+                        <button onClick={handleAddToListClick} className="action-btn list-btn">
+                            🔖 Adicionar à Lista
                         </button>
                     </div>
-                )}
-                {/* --- FIM DA LÓGICA --- */}
-                <button onClick={handleLike} className="like-button">
-                    {userLiked ? '💔 Remover Curtida' : '❤️ Curtir Livro'} ({likes})
-                </button>
-                
-                {/* Botão Adicionar à Lista */}
-                <button onClick={handleAddToListClick} className="add-to-list-button">
-                    + Adicionar à Lista
-                </button>
-            </div>
 
-            <div className="book-reviews">
-                <h3>Avaliações ({comments.length})</h3>
+                    {book.generos && book.generos.length > 0 && (
+                        <div className="book-genres">
+                            {book.generos.map(genre => (
+                                <span key={genre.id} className="genre-pill">{genre.nome}</span>
+                            ))}
+                        </div>
+                    )}
+                </aside>
 
-                {token && !userHasReviewed && (
-                    <form onSubmit={handleSubmitReview} className="review-form">
-                        <h4>Deixe sua avaliação</h4>
-                        <StarRating rating={newRating} setRating={setNewRating} />
-                        <textarea
-                            placeholder={`O que você achou, ${user.nome}?`}
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            required
-                        ></textarea>
-                        <button type="submit" className="submit-btn">Enviar Avaliação</button>
-                    </form>
-                )}
-                {token && userHasReviewed && (
-                    <div className="login-prompt">
-                        <p>Sua avaliação já foi registrada para este livro.</p>
+                {/* --- CONTEÚDO PRINCIPAL (DIREITA) --- */}
+                <main className="book-main-content">
+                    
+                    {/* Cabeçalho */}
+                    <div className="book-header-info">
+                        <h1 className="book-title">{book.titulo}</h1>
+                        <h2 className="book-author">por <span>{book.autor}</span></h2>
+                        
+                        <div className="book-rating-box">
+                            <span className="rating-number">{averageRating}</span>
+                            <div className="rating-stars">
+                                <StarRating rating={Math.round(averageRating)} readOnly size="small"/>
+                            </div>
+                            <span className="rating-count">{rating.total_avaliacoes} avaliações</span>
+                        </div>
                     </div>
-                )}
-                {!token && (
-                    <div className="login-prompt">
-                        <p>Você precisa estar logado para deixar uma avaliação.</p>
-                        <button onClick={() => openAuthModal('login')}>Entrar</button>
-                    </div>
-                )}
 
-                {comments.map(comment => (
-                    <div key={comment.id} className="comment" style={user && comment.usuario_id === user.id ? userCommentStyle : {}}>
-
-                        {/* MODO DE EDIÇÃO */}
-                        {editingCommentId === comment.id ? (
-                            <form onSubmit={handleUpdateReview} className="edit-form">
-                                <StarRating rating={editRating} setRating={setEditRating} />
-                                <textarea
-                                    value={editText}
-                                    onChange={(e) => setEditText(e.target.value)}
-                                    required
-                                />
-                                <div className="comment-actions">
-                                    <button type="submit">Salvar</button>
-                                    <button type="button" onClick={handleCancelEdit} className="btn-cancel">Cancelar</button>
-                                </div>
-                            </form>
-                        ) : (
-                            /* MODO DE VISUALIZAÇÃO (NORMAL) */
-                            <>
-                                {(() => {
-                                    // 1. Verifica se o usuário está logado E se o comentário é dele
-                                    const isSelfComment = user && user.id === comment.usuario_id;
-
-                                    return (
-                                        <>
-                                            <div className="comment-header">
-                                                <strong 
-                                                    // 2. Aplica a classe CSS correta
-                                                    className={isSelfComment ? 'comment-author-self' : 'comment-author-clickable'}
-                                                    
-                                                    // 3. Só adiciona o onClick se NÃO for o usuário
-                                                    onClick={isSelfComment ? null : () => setViewingProfileId(comment.usuario_id)}
-                                                >
-                                                    {comment.usuario_nome}
-                                                </strong>
-                                                {comment.nota > 0 && (
-                                                    <span className="comment-stars">{'⭐'.repeat(comment.nota)}</span>
-                                                )}
-                                            </div>
-                                            <p>{comment.texto}</p>
-                                            <div className="comment-actions">
-                                                <button
-                                                    onClick={() => handleCommentLike(comment.id)}
-                                                    className={comment.userLiked ? 'liked' : ''}>
-                                                    👍 {comment.curtidas}
-                                                </button>
-
-
-                                                {user && user.id === comment.usuario_id && (
-                                                    <>
-                                                        <button onClick={() => handleEditClick(comment)} className="btn-edit">Editar</button>
-                                                        <button onClick={() => handleDeleteClick(comment.id)} className="btn-delete">Deletar</button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </>
-                                    );
-                                })()}
-                            </>
+                    {/* Sinopse com "Ler Mais" */}
+                    <div className="book-synopsis">
+                        <h3>Sinopse</h3>
+                        <div className={`synopsis-container ${isClamped ? 'clamped' : ''} ${isOverflowing ? 'is-overflowing' : ''}`}>
+                            <p className="synopsis-text" ref={synopsisRef}>{book.sinopse}</p>
+                        </div>
+                        {isOverflowing && (
+                            <button onClick={() => setIsClamped(!isClamped)} className="btn-expand-synopsis">
+                                {isClamped ? 'Ler mais' : 'Esconder'}
+                            </button>
                         )}
                     </div>
-                ))}
+
+                    <hr className="divider" />
+
+                    {/* Reviews */}
+                    <div className="reviews-section">
+                        <h3>Avaliações da Comunidade</h3>
+
+                        {/* Form de Avaliação */}
+                        {!userHasReviewed && (
+                            <div className="review-input-card">
+                                {token ? (
+                                    <form onSubmit={handleSubmitReview}>
+                                        <h4>Escreva sua opinião</h4>
+                                        <div className="rating-input">
+                                            <span>Sua nota:</span>
+                                            <StarRating rating={newRating} setRating={setNewRating} />
+                                        </div>
+                                        <textarea
+                                            placeholder={`O que você achou deste livro, ${user.nome}?`}
+                                            value={newComment}
+                                            onChange={(e) => setNewComment(e.target.value)}
+                                            required
+                                        ></textarea>
+                                        <button type="submit" className="btn-submit-review">Publicar Avaliação</button>
+                                    </form>
+                                ) : (
+                                    <div className="login-prompt-box">
+                                        <p>Faça login para avaliar este livro.</p>
+                                        <button onClick={() => openAuthModal('login')} className="btn-login-prompt">Entrar</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Lista de Comentários */}
+                        <div className="comments-list">
+                            {comments.length === 0 && <p>Seja o primeiro a avaliar!</p>}
+                            
+                            {comments.map(comment => {
+                                const isOwnComment = user && comment.usuario_id === user.id;
+                                
+                                return (
+                                    <div key={comment.id} className={`comment-card ${isOwnComment ? 'own-card' : ''}`}>
+                                        <div className="comment-card-header">
+                                            <div className="user-info" onClick={() => setViewingProfileId(comment.usuario_id)}>
+                                                <div className="user-avatar-placeholder">
+                                                    {comment.usuario_nome.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="user-meta">
+                                                    <span className="username">{comment.usuario_nome}</span>
+                                                    {isOwnComment && <span className="badge-you">Você</span>}
+                                                </div>
+                                            </div>
+                                            <div className="user-rating">
+                                                <StarRating rating={comment.nota} readOnly size="small" />
+                                            </div>
+                                        </div>
+
+                                        <div className="comment-card-body">
+                                            {editingCommentId === comment.id ? (
+                                                <form onSubmit={handleUpdateReview} className="edit-review-form">
+                                                    <StarRating rating={editRating} setRating={setEditRating} />
+                                                    <textarea value={editText} onChange={(e) => setEditText(e.target.value)} required />
+                                                    <div className="edit-actions">
+                                                        <button type="button" onClick={handleCancelEdit} className="btn-cancel">Cancelar</button>
+                                                        <button type="submit" className="btn-save">Salvar</button>
+                                                    </div>
+                                                </form>
+                                            ) : (
+                                                <p className="review-text">"{comment.texto}"</p>
+                                            )}
+                                        </div>
+
+                                        <div className="comment-card-footer">
+                                            <button onClick={() => handleCommentLike(comment.id)} className={`btn-like-comment ${comment.userLiked ? 'liked' : ''}`}>
+                                                👍 {comment.curtidas > 0 ? comment.curtidas : ''} Curtir
+                                            </button>
+                                            {isOwnComment && !editingCommentId && (
+                                                <div className="owner-actions">
+                                                    <button onClick={() => handleEditClick(comment)} className="btn-icon edit">✎ Editar</button>
+                                                    <button onClick={() => handleDeleteClick(comment.id)} className="btn-icon delete">🗑️ Excluir</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </main>
             </div>
 
-            {/* 4. ADICIONE O MODAL NO FINAL DO RETURN */}
+            {/* Modais */}
             {viewingProfileId && (
                 <UserProfileModal
                     userId={viewingProfileId}
                     closeModal={() => setViewingProfileId(null)}
-                    openListDetailModal={openListDetailModal} // <<< ADICIONE ESTA LINHA
+                    openListDetailModal={openListDetailModal}
                 />
             )}
-
-            {/* --- MODAL DE CONFIRMAÇÃO --- */}
             <ConfirmModal
                 isOpen={commentToDelete !== null}
                 onClose={() => setCommentToDelete(null)}
                 onConfirm={handleDeleteConfirm}
                 title="Confirmar Exclusão"
             >
-                <p>Você tem certeza que deseja deletar sua avaliação? Esta ação não pode ser desfeita.</p>
+                <p>Você tem certeza? Essa ação não pode ser desfeita.</p>
             </ConfirmModal>
         </div>
     );

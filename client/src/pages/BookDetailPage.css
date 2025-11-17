@@ -1,264 +1,180 @@
-/* --- Estilos da Página de Detalhes (de App.css) --- */
-.book-detail-container {
+/* src/pages/BookDetailPage.css */
+
+/* --- LAYOUT GERAL --- */
+.book-page-wrapper {
+    width: 100%;
+    background-color: #f4f7f9;
+    min-height: 100vh;
+    padding-bottom: 60px;
+    position: relative;
+    
+    /* --- CORREÇÃO DEFINITIVA: Espaço para a navbar --- */
+    padding-top: 120px; 
+}
+
+/* Fundo gradiente suave no topo */
+.book-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 350px; /* Cobre o espaço do padding + um pouco do conteudo */
+    background: linear-gradient(180deg, #e3f2fd 0%, #f4f7f9 100%);
+    z-index: 0;
+}
+
+.book-content-container {
+    position: relative;
+    z-index: 1;
     display: grid;
-    grid-template-columns: 2.5fr 2.5fr;
-    gap: 3rem;
-    margin-top: 2rem;
-    align-items: flex-start;
+    grid-template-columns: 300px 1fr; /* Grid Lateral / Principal */
+    gap: 40px;
+    align-items: start;
+    margin-top: 0; 
 }
 
-.book-info {
-    background-color: var(--container-bg);
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    text-align: center;
-}
-
-.book-cover-large {
-    width: 100%;
-    max-width: 300px;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-}
-
-.book-info h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-.book-info h2 { font-size: 1.2rem; color: #666; font-weight: 400; margin-bottom: 1rem; }
-.book-info .rating { margin-bottom: 1rem; }
-.book-info p { text-align: justify; line-height: 1.6; color: #555; }
-
-.like-button {
-    margin-top: 1.5rem;
-    background-color: #f0f0f0;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 500;
-}
-.like-button.liked {
-  color: red;
-}
-
-.book-reviews {
-    background-color: var(--container-bg);
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-/* --- Formulário de Avaliação (de App.css) --- */
-.review-form {
-    margin-top: 1.5rem;
-    border-top: 1px solid #eee;
-    padding-top: 1.5rem;
-    margin-bottom: 2rem;
-}
-.review-form h4 {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.star-rating {
-    margin-bottom: 1rem;
-}
-.star-rating .star {
-    font-size: 2rem;
-    cursor: pointer;
-    color: #ddd;
-    transition: color 0.2s;
-}
-.star-rating .star.selected,
-.star-rating .star:hover {
-    color: #f5c518;
-}
-
-.review-form textarea {
-    width: 100%;
-    min-height: 120px;
-    padding: 12px 15px;
-    border: 1px solid var(--input-border);
-    border-radius: 8px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
-    resize: vertical;
-    margin-bottom: 1rem;
-    box-sizing: border-box;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.review-form textarea:focus {
-    outline: none;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-}
-
-.review-form .submit-btn {
-  width: 100%;
-  padding: 12px;
-  background-color: var(--primary-blue);
-  color: var(--light-text);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-.review-form .submit-btn:hover {
-  background-color: #0056b3;
-}
-
-/* --- Seção de Comentários (de App.css) --- */
-.comment {
-    border-top: 1px solid #eee;
-    padding: 1.5rem 0;
-}
-.comment:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.comment-header {
+/* --- SIDEBAR (ESQUERDA) --- */
+.book-sidebar {
     display: flex;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
-.comment-header strong {
-    font-size: 1rem;
-}
-.comment-stars {
-    margin-left: 0.75rem;
-    font-size: 0.9rem;
-}
-.comment p {
-    color: #444;
-    line-height: 1.6;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.comment-actions {
-    margin-top: 10px;
+.book-cover-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 12px 24px rgba(0, 123, 255, 0.15); 
+    background-color: #fff;
+    transition: transform 0.3s ease;
+}
+.book-cover-wrapper:hover { transform: translateY(-5px); }
+
+.book-cover-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+}
+
+/* Botões de Ação */
+.book-actions {
     display: flex;
+    flex-direction: column;
     gap: 10px;
-    align-items: center;
-}
-.comment-actions button {
-    background-color: #f0f2f5;
-    border: none;
-    cursor: pointer;
-    font-size: 0.85rem;
-    color: #333;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-.comment-actions button:hover {
-    background-color: #e4e6eb;
 }
 
-.btn-edit {
-    color: var(--primary-blue) !important;
-    background-color: rgba(0, 123, 255, 0.1) !important;
-}
-.btn-edit:hover {
-    background-color: rgba(0, 123, 255, 0.2) !important;
-}
-
-.btn-delete {
-    color: var(--error-color) !important;
-    background-color: rgba(220, 53, 69, 0.1) !important;
-}
-.btn-delete:hover {
-    background-color: rgba(220, 53, 69, 0.2) !important;
-}
-
-.edit-form {
-    margin-top: 1rem;
-}
-.edit-form textarea {
+.action-btn {
     width: 100%;
-    min-height: 100px;
-    padding: 12px 15px;
-    border: 1px solid var(--input-border);
-    border-radius: 8px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
-    resize: vertical;
-    margin-bottom: 1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    padding: 12px;
+    border-radius: 50px;
+    border: 2px solid #e1e8ed;
+    background-color: white;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
 }
-.edit-form textarea:focus {
-    outline: none;
+.action-btn:hover {
     border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    color: var(--primary-blue);
+    background-color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.1);
 }
-.edit-form .comment-actions button {
+
+.action-btn.liked {
+    background-color: #ffebeb;
+    border-color: #ff4d4f;
+    color: #ff4d4f;
+}
+
+.action-btn.list-btn {
     background-color: var(--primary-blue);
     color: white;
+    border-color: var(--primary-blue);
 }
-.edit-form .comment-actions button:hover {
-    background-color: #0056b3;
-}
-.edit-form .btn-cancel {
-    background-color: #f0f2f5;
-    color: #333;
-}
-.edit-form .btn-cancel:hover {
-    background-color: #e4e6eb;
+.action-btn.list-btn:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
 }
 
-/* Contêiner para as tags de gênero */
-.genre-tags {
+/* Tags de Gênero */
+.book-genres {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center; /* Centraliza as tags */
-    gap: 8px; /* Espaço entre as tags */
-    margin: 1rem 0; /* Espaço acima e abaixo */
+    gap: 8px;
+    justify-content: center;
+    margin-top: 5px;
 }
-
-/* A tag individual */
-.genre-tag {
-    background-color: var(--primary-blue); /* Usando sua cor primária */
-    color: white;
-    padding: 5px 12px;
-    border-radius: 15px; /* Deixa arredondado */
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-/* Adicione ao final de BookDetailPage.css */
-.add-to-list-button {
-    margin-top: 1rem;
-    background-color: var(--primary-blue);
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
+.genre-pill {
+    background-color: #ffffff;
+    border: 1px solid #d0d7de;
+    color: #556;
+    padding: 6px 14px;
     border-radius: 20px;
-    cursor: pointer;
+    font-size: 0.8rem;
     font-weight: 500;
-    width: 100%;
-    font-size: 1rem;
-}
-.add-to-list-button:hover {
-    opacity: 0.9;
 }
 
-/* --- Estilos da Sinopse "Ler Mais" --- */
-
-.synopsis-container {
-    position: relative;
+/* --- CONTEÚDO PRINCIPAL (DIREITA) --- */
+.book-main-content {
+    display: flex;
+    flex-direction: column;
 }
 
-/* 1. O estilo do texto quando está "fechado" (clamped) */
+/* Cabeçalho do Livro */
+.book-header-info { margin-bottom: 25px; }
+
+.book-title {
+    font-family: 'Merriweather', serif;
+    font-size: 2.8rem;
+    color: var(--text-main);
+    margin-bottom: 8px;
+    line-height: 1.1;
+}
+.book-author {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    color: #667788;
+    font-weight: 400;
+    margin-bottom: 20px;
+}
+.book-author span { font-weight: 600; color: var(--primary-blue); }
+
+.book-rating-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    width: fit-content;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.rating-number { font-size: 2rem; font-weight: 700; color: var(--text-main); }
+.rating-count { color: #8899a6; font-size: 0.9rem; }
+
+/* Sinopse e Ler Mais */
+.book-synopsis h3, .reviews-section h3 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: var(--text-main);
+    border-left: 5px solid var(--primary-blue);
+    padding-left: 15px;
+}
+
+.synopsis-container { position: relative; }
 .synopsis-container.clamped .synopsis-text {
     display: -webkit-box;
-    -webkit-line-clamp: 4; /* Define as 4 linhas que você pediu */
+    -webkit-line-clamp: 4; 
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
-/* 2. O efeito "fade" (transparência) que você pediu */
-/* Só aparece se estiver 'clamped' E 'is-overflowing' */
+/* Fade effect no texto da sinopse */
 .synopsis-container.clamped.is-overflowing::after {
     content: '';
     position: absolute;
@@ -266,11 +182,14 @@
     left: 0;
     right: 0;
     height: 40px; 
-    /* O 'var(--container-bg)' deve ser a cor de fundo do seu container */
-    background: linear-gradient(to top, var(--container-bg) 10%, transparent);
+    background: linear-gradient(to top, #f4f7f9 10%, transparent); /* Cor do fundo da página */
 }
-
-/* 3. O botão de "Ler mais / Esconder" */
+.book-synopsis p {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #2c3e50;
+    text-align: justify;
+}
 .btn-expand-synopsis {
     background: none;
     border: none;
@@ -279,5 +198,143 @@
     font-weight: bold;
     padding: 8px 0 0 0;
     text-decoration: underline;
-    font-size: 0.9rem;
+}
+
+.divider { margin: 40px 0; border: 0; border-top: 1px solid #e1e8ed; }
+
+/* --- SEÇÃO DE REVIEWS --- */
+.review-input-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+    border: 1px solid #eee;
+}
+.review-input-card h4 { margin-bottom: 15px; }
+.rating-input { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; font-weight: 500; }
+
+.review-input-card textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 15px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    resize: vertical;
+    margin-bottom: 15px;
+}
+.review-input-card textarea:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.btn-submit-review {
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    float: right;
+}
+.btn-submit-review:hover { background-color: var(--primary-hover); }
+.review-input-card::after { content: ""; display: table; clear: both; }
+
+/* Login Prompt */
+.login-prompt-box {
+    text-align: center;
+    padding: 20px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+}
+.btn-login-prompt {
+    background-color: transparent;
+    border: 1px solid var(--primary-blue);
+    color: var(--primary-blue);
+    padding: 8px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: 600;
+}
+.btn-login-prompt:hover { background-color: var(--primary-blue); color: white; }
+
+/* --- LISTA DE COMENTÁRIOS --- */
+.comments-list { display: flex; flex-direction: column; gap: 20px; }
+
+.comment-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid #f0f0f0;
+}
+.comment-card.own-card { border: 1px solid #b8daff; background-color: #f8fbff; }
+
+.comment-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.user-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.user-avatar-placeholder {
+    width: 45px; height: 45px;
+    background-color: #e1e8ed; color: #556;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1.2rem;
+}
+.user-meta { display: flex; flex-direction: column; }
+.username { font-weight: 600; color: #333; font-size: 1rem; }
+.badge-you {
+    font-size: 0.7rem; background-color: #cce5ff; color: #004085;
+    padding: 2px 8px; border-radius: 10px; width: fit-content; font-weight: 600;
+}
+.review-text { color: #444; line-height: 1.6; font-size: 1rem; margin-bottom: 15px; }
+
+.comment-card-footer {
+    margin-top: 10px; padding-top: 15px; border-top: 1px solid #f4f4f4;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.btn-like-comment {
+    background: none; border: none; color: #667788;
+    font-size: 0.9rem; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border-radius: 20px;
+    transition: background-color 0.2s;
+}
+.btn-like-comment:hover { color: var(--primary-blue); background-color: #f0f7ff; }
+.btn-like-comment.liked { color: var(--primary-blue); }
+
+.owner-actions { display: flex; gap: 15px; }
+.btn-icon { background: none; border: none; font-size: 0.85rem; cursor: pointer; color: #8899a6; font-weight: 500; }
+.btn-icon.edit:hover { color: var(--primary-blue); }
+.btn-icon.delete:hover { color: var(--error-color); }
+
+/* --- Estrelas --- */
+.star-rating .star { font-size: 1.6rem; cursor: pointer; transition: color 0.1s; }
+.star-rating.small .star { font-size: 1.1rem; }
+.star-rating.readonly .star { cursor: default; }
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 850px) {
+    .book-content-container {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        margin-top: 0;
+        /* Ajuste para mobile */
+        padding-top: 60px; 
+    }
+    .book-sidebar { flex-direction: column; align-items: center; }
+    .book-cover-wrapper { max-width: 220px; }
+    .book-actions { width: 100%; max-width: 350px; flex-direction: row; }
+    .book-header-info { text-align: center; display: flex; flex-direction: column; align-items: center; }
+}
+@media (max-width: 500px) {
+    .book-actions { flex-direction: column; }
 }
