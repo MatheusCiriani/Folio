@@ -1,38 +1,91 @@
-.admin-form-container {
-    max-width: 700px;
-    margin: 2rem auto;
-    padding: 2rem;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+/* src/pages/AdminForms.css */
+
+/* --- LAYOUT BASE (Mesma estrutura do Profile e BookDetail) --- */
+.admin-page-wrapper {
+    width: 100%;
+    background-color: #f4f7f9;
+    min-height: 100vh;
+    padding-bottom: 60px;
+    position: relative;
+    /* ESPAÇO PARA A NAVBAR FIXA */
+    padding-top: 120px; 
 }
 
-.admin-form-container h2 {
+.admin-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 350px;
+    background: linear-gradient(180deg, #e3f2fd 0%, #f4f7f9 100%);
+    z-index: 0;
+}
+
+.admin-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+}
+
+/* --- CARD DO FORMULÁRIO --- */
+.admin-form-card {
+    background-color: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 800px; /* Largura controlada */
+}
+
+.form-title {
     text-align: center;
-    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    color: var(--text-main);
+    margin-bottom: 10px;
+    font-family: 'Merriweather', serif;
+}
+
+.form-subtitle {
+    text-align: center;
+    color: #667788;
+    margin-bottom: 30px;
+}
+
+/* --- INPUTS E GRIDS --- */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
 }
 
 .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #445566;
+    font-size: 0.9rem;
 }
 
 .form-group input,
 .form-group textarea {
     width: 100%;
-    padding: 0.8rem;
-    border: 1px solid var(--input-border);
-    border-radius: 6px;
+    padding: 12px 15px;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    background-color: #f9fafb;
     font-size: 1rem;
     font-family: 'Poppins', sans-serif;
+    transition: all 0.2s ease;
+    color: var(--text-main);
 }
+
 .form-group textarea {
-    min-height: 150px;
+    min-height: 120px;
     resize: vertical;
 }
 
@@ -40,34 +93,117 @@
 .form-group textarea:focus {
     outline: none;
     border-color: var(--primary-blue);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-.message {
-  text-align: center;
-  margin-top: 1rem;
-  font-weight: 500;
-}
-
-/* Estilos para o grupo de checkboxes de gênero */
-.form-group .checkbox-group {
-    display: flex;
-    flex-wrap: wrap; /* Faz os gêneros quebrarem a linha se não couberem */
-    gap: 10px 15px;  /* Espaçamento vertical e horizontal */
+/* Preview da Capa */
+.preview-capa {
+    margin-top: 10px;
+    background: #f4f7f9;
     padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #f9f9f9;
+    border-radius: 8px;
+    text-align: center;
+}
+.preview-capa span {
+    display: block;
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 5px;
+}
+.preview-capa img {
+    max-height: 150px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.checkbox-group label {
+/* --- CHECKBOXES DE GÊNERO (Estilo Pill/Tag) --- */
+.genres-grid {
     display: flex;
-    align-items: center;
-    gap: 5px; /* Espaço entre o checkbox e o texto */
-    cursor: pointer;
-    font-size: 0.95rem;
+    flex-wrap: wrap;
+    gap: 10px;
+    background-color: #f9fafb;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e1e8ed;
 }
 
-.checkbox-group input[type="checkbox"] {
+.genre-checkbox {
+    display: inline-flex;
+    align-items: center;
     cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background-color: white;
+    border: 1px solid #d0d7de;
+    font-size: 0.9rem;
+    color: #556;
+    transition: all 0.2s;
+    user-select: none; /* Impede seleção de texto */
+}
+
+.genre-checkbox input {
+    display: none; /* Esconde o checkbox padrão */
+}
+
+.genre-checkbox:hover {
+    border-color: var(--primary-blue);
+    background-color: #f0f7ff;
+}
+
+/* Estado Selecionado */
+.genre-checkbox.selected {
+    background-color: var(--primary-blue);
+    color: white;
+    border-color: var(--primary-blue);
+    font-weight: 600;
+}
+
+/* --- BOTÃO E MENSAGENS --- */
+.submit-btn-admin {
+    width: 100%;
+    padding: 14px;
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.2s;
+}
+
+.submit-btn-admin:hover {
+    background-color: var(--primary-hover);
+}
+
+.form-message {
+    text-align: center;
+    margin-top: 20px;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.form-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.form-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .admin-form-card {
+        padding: 25px;
+    }
 }

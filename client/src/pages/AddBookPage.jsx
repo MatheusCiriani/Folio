@@ -1,23 +1,20 @@
-// pages/AddBookPage.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import './AdminForms.css'; //
+import './AdminForms.css'; 
 
 const AddBookPage = () => {
-    const [titulo, setTitulo] = useState(''); //
-    const [autor, setAutor] = useState(''); //
-    const [sinopse, setSinopse] = useState(''); //
-    const [capa, setCapa] = useState('');  //
+    const [titulo, setTitulo] = useState('');
+    const [autor, setAutor] = useState('');
+    const [sinopse, setSinopse] = useState('');
+    const [capa, setCapa] = useState('');
     
-    // --- NOVOS ESTADOS ---
-    const [allGenres, setAllGenres] = useState([]); // Para listar os gêneros
-    const [selectedGenres, setSelectedGenres] = useState([]); // Para guardar os IDs selecionados
+    const [allGenres, setAllGenres] = useState([]);
+    const [selectedGenres, setSelectedGenres] = useState([]);
     
-    const [message, setMessage] = useState(''); //
-    const navigate = useNavigate(); //
+    const [message, setMessage] = useState('');
+    const navigate = useNavigate();
 
-    // --- NOVO useEffect para buscar os gêneros ---
     useEffect(() => {
         const fetchGenres = async () => {
             try {
@@ -29,21 +26,18 @@ const AddBookPage = () => {
             }
         };
         fetchGenres();
-    }, []); // Executa só uma vez
+    }, []);
 
-    // --- NOVA Função para lidar com a seleção de gêneros ---
     const handleGenreChange = (e) => {
         const genreId = parseInt(e.target.value);
         if (e.target.checked) {
-            // Adiciona o ID ao array
             setSelectedGenres(prev => [...prev, genreId]);
         } else {
-            // Remove o ID do array
             setSelectedGenres(prev => prev.filter(id => id !== genreId));
         }
     };
 
-    const handleSubmit = async (e) => { //
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
         const newBook = {
@@ -51,76 +45,108 @@ const AddBookPage = () => {
             autor,
             sinopse,
             capa,
-            generos: selectedGenres // <<< ENVIA O ARRAY DE IDs
+            generos: selectedGenres
         };
 
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('/api/books', newBook, { //
+            const res = await axios.post('/api/books', newBook, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
-            setMessage('Livro adicionado com sucesso! Redirecionando...'); //
-            setTimeout(() => navigate(`/book/${res.data.id}`), 2000); //
+            setMessage('Livro adicionado com sucesso! Redirecionando...');
+            setTimeout(() => navigate(`/book/${res.data.id}`), 2000);
         } catch (err) {
-            setMessage(err.response?.data?.message || 'Erro ao adicionar livro.'); //
+            setMessage(err.response?.data?.message || 'Erro ao adicionar livro.');
         }
     };
 
     return (
-        <div className="admin-form-container">
-            <h2>Adicionar Novo Livro</h2>
-            <form onSubmit={handleSubmit}>
-                
-                {/* --- AQUI ESTÃO OS INPUTS QUE FALTAVAM --- */}
-                <div className="form-group">
-                    <label>Título</label>
-                    <input type="text" value={titulo} onChange={e => setTitulo(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                    <label>Autor</label>
-                    <input type="text" value={autor} onChange={e => setAutor(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                    <label>Sinopse</label>
-                    <textarea value={sinopse} onChange={e => setSinopse(e.target.value)} required />
-                </div>
-                <div className="form-group">
-                    <label>URL da Capa do Livro</label>
-                    <input 
-                        type="url" 
-                        placeholder="https://exemplo.com/imagem.jpg"
-                        value={capa} 
-                        onChange={e => setCapa(e.target.value)} 
-                        required 
-                    />
-                </div>
-                {/* --- FIM DOS INPUTS QUE FALTAVAM --- */}
-
-
-                {/* --- NOVO CAMPO DE GÊNEROS --- */}
-                <div className="form-group">
-                    <label>Gêneros</label>
-                    <div className="checkbox-group">
-                        {allGenres.length > 0 ? allGenres.map(genre => (
-                            <label key={genre.id}>
+        <div className="admin-page-wrapper">
+            <div className="admin-backdrop"></div>
+            
+            <div className="admin-content container">
+                <div className="admin-form-card">
+                    <h2 className="form-title">Adicionar Novo Livro</h2>
+                    <p className="form-subtitle">Preencha os dados abaixo para incluir uma obra na estante.</p>
+                    
+                    <form onSubmit={handleSubmit}>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Título da Obra</label>
                                 <input 
-                                    type="checkbox" 
-                                    value={genre.id}
-                                    onChange={handleGenreChange}
-                                    checked={selectedGenres.includes(genre.id)}
+                                    type="text" 
+                                    placeholder="Ex: O Senhor dos Anéis"
+                                    value={titulo} 
+                                    onChange={e => setTitulo(e.target.value)} 
+                                    required 
                                 />
-                                {genre.nome}
-                            </label>
-                        )) : (
-                            <p>Carregando gêneros...</p>
-                        )}
-                    </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Autor(a)</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Ex: J.R.R. Tolkien"
+                                    value={autor} 
+                                    onChange={e => setAutor(e.target.value)} 
+                                    required 
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Sinopse</label>
+                            <textarea 
+                                placeholder="Breve descrição sobre o livro..."
+                                value={sinopse} 
+                                onChange={e => setSinopse(e.target.value)} 
+                                required 
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>URL da Capa (Imagem)</label>
+                            <input 
+                                type="url" 
+                                placeholder="https://exemplo.com/imagem.jpg"
+                                value={capa} 
+                                onChange={e => setCapa(e.target.value)} 
+                                required 
+                            />
+                            {capa && (
+                                <div className="preview-capa">
+                                    <span>Pré-visualização:</span>
+                                    <img src={capa} alt="Capa preview" onError={(e) => e.target.style.display='none'}/>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="form-group">
+                            <label>Gêneros</label>
+                            <div className="genres-grid">
+                                {allGenres.length > 0 ? allGenres.map(genre => (
+                                    <label key={genre.id} className={`genre-checkbox ${selectedGenres.includes(genre.id) ? 'selected' : ''}`}>
+                                        <input 
+                                            type="checkbox" 
+                                            value={genre.id}
+                                            onChange={handleGenreChange}
+                                            checked={selectedGenres.includes(genre.id)}
+                                        />
+                                        {genre.nome}
+                                    </label>
+                                )) : (
+                                    <p>Carregando gêneros...</p>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <button type="submit" className="submit-btn-admin">Adicionar Livro</button>
+                    </form>
+                    
+                    {message && <p className={`form-message ${message.includes('sucesso') ? 'success' : 'error'}`}>{message}</p>}
                 </div>
-                
-                <button type="submit" className="submit-btn">Adicionar Livro</button>
-            </form>
-            {message && <p className="message">{message}</p>}
+            </div>
         </div>
     );
 };

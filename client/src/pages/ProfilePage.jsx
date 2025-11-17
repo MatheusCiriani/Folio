@@ -1,18 +1,15 @@
-// pages/ProfilePage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import UserProfileModal from '../components/UserProfileModal';
 
 import './ProfilePage.css';
-import './AdminForms.css';
 
-// <<< A CORREÇÃO ESTÁ AQUI. RECEBA AS PROPS.
 const ProfilePage = ({ openCreateListModal, openListDetailModal, openConfirmDeleteModal }) => {
     const [user, setUser] = useState(null);
     const [likedBooks, setLikedBooks] = useState([]);
     const [followingList, setFollowingList] = useState([]);
-    const [myLists, setMyLists] = useState([]); // Estado para listas
+    const [myLists, setMyLists] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
     
@@ -20,9 +17,6 @@ const ProfilePage = ({ openCreateListModal, openListDetailModal, openConfirmDele
     const token = localStorage.getItem('token');
     
     const [viewingProfileId, setViewingProfileId] = useState(null);
-
-    // --- 2. ADICIONE O ESTADO DA ABA ---
-    const [activeTab, setActiveTab] = useState('atividade'); // 'atividade' ou 'config'
 
     const fetchMyProfile = useCallback(async () => {
         setLoading(true);
@@ -33,19 +27,18 @@ const ProfilePage = ({ openCreateListModal, openListDetailModal, openConfirmDele
             const userId = loggedInUser.id;
             const config = { headers: { Authorization: `Bearer ${token}` } };
 
-            // Busca tudo em paralelo
             const [profileRes, booksRes, followingRes, listsRes] = await Promise.all([
                 axios.get(`/api/users/me`, config),
                 axios.get(`/api/users/${userId}/liked-books`),
                 axios.get(`/api/users/me/following`, config),
-                axios.get(`/api/lists/`, { headers: { Authorization: `Bearer ${token}` } })
+                axios.get(`/api/lists/`, config)
             ]);
 
             setUser(profileRes.data);
             setNome(profileRes.data.nome);
             setLikedBooks(booksRes.data);
             setFollowingList(followingRes.data);
-            setMyLists(listsRes.data); // Salva as listas
+            setMyLists(listsRes.data);
 
         } catch (error) {
             console.error("Erro ao carregar seu perfil:", error);
@@ -60,6 +53,7 @@ const ProfilePage = ({ openCreateListModal, openListDetailModal, openConfirmDele
 
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
+        setMessage('');
         try {
             const res = await axios.put(
                 '/api/users/me',
@@ -71,158 +65,165 @@ const ProfilePage = ({ openCreateListModal, openListDetailModal, openConfirmDele
             setUser(updatedUser);
             localStorage.setItem('usuarios', JSON.stringify(updatedUser));
             
-            setMessage(res.data.message);
+            setMessage('Perfil atualizado com sucesso!');
             window.dispatchEvent(new Event('storage')); 
+            
+            // Limpa a mensagem após 3 segundos
+            setTimeout(() => setMessage(''), 3000);
             
         } catch (error) {
             setMessage(error.response?.data?.message || 'Erro ao atualizar perfil.');
         }
     };
 
-    // Função de Deleção
     const handleDeleteList = async (listId) => {
         try {
             await axios.delete(`/api/lists/${listId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            fetchMyProfile(); // Recarrega o perfil para atualizar a lista
+            fetchMyProfile(); 
         } catch (err) {
             alert(err.response?.data?.message || 'Erro ao deletar lista.');
         }
     };
 
-    if (loading) return <p>Carregando seu perfil...</p>;
-    if (!user) return <p>Não foi possível carregar seu perfil. Tente fazer login novamente.</p>;
+    if (loading) return <div className="loading-screen">Carregando perfil...</div>;
+    if (!user) return <div className="error-screen">Não foi possível carregar seu perfil.</div>;
+
+    const userInitials = user.nome ? user.nome.charAt(0).toUpperCase() : '?';
 
     return (
-        <div className="profile-page-container">
-            <h2>Meu Perfil</h2>
-
-            {/* --- 3. MENU DE ABAS --- */}
-            <div className="profile-tabs">
-                <button
-                    className={`tab-button ${activeTab === 'atividade' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('atividade')}
-                >
-                    Minha Atividade
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'config' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('config')}
-                >
-                    Configurações
-                </button>
-            </div>
-            {message && <p className="message">{message}</p>}
-
-
-            {/* --- 4. CONTEÚDO DAS ABAS --- */}
-            <div className="tab-content">
+        <div className="profile-page-wrapper">
+            <div className="profile-backdrop"></div>
+            
+            <div className="profile-content container">
                 
-                {/* === ABA DE ATIVIDADE === */}
-                {activeTab === 'atividade' && (
-                    <>
-                        {/* --- Seção "Seguindo" --- */}
-                        <h3>Quem você segue ({followingList.length})</h3>
-                        {followingList.length > 0 ? (
-                            <ul className="following-list">
-                                {followingList.map(followedUser => (
-                                    <li key={followedUser.id} 
-                                        onClick={() => setViewingProfileId(followedUser.id)}
-                                        className="following-item"
-                                    >
-                                        {followedUser.nome}
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p>Você ainda não segue ninguém.</p>
-                        )}
-
-                        <hr style={{margin: '30px 0'}} />
-
-                        {/* --- Seção "Minhas Listas" --- */}
-                        <div className="list-management-section">
-                            <div className="list-header">
-                                <h3>Minhas Listas ({myLists.length})</h3>
-                                <button 
-                                    onClick={() => openCreateListModal(null, fetchMyProfile)} // <-- LINHA MODIFICADA
-                                    className="btn-new-list"
-                                >
-                                    + Criar Nova Lista
-                                </button>
-                            </div>
-                            
-                            {myLists.length > 0 ? (
-                                <ul className="my-lists-container">
-                                    {myLists.map(list => (
-                                        <li key={list.id} className="my-list-item">
-                                            <span className="list-name" onClick={() => openListDetailModal(list.id)}>
-                                                {list.nome}
-                                            </span>
-                                            <div className="list-actions">
-                                                <button onClick={() => openListDetailModal(list.id)} className="btn-action btn-view">Ver</button>
-                                                <button onClick={() => openCreateListModal(list)} className="btn-action btn-edit">Editar</button>
-                                                <button 
-                                                    onClick={() => openConfirmDeleteModal(list.id, () => handleDeleteList(list.id))} 
-                                                    className="btn-action btn-delete"
-                                                >
-                                                    Deletar
-                                                </button>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p>Você ainda não criou nenhuma lista.</p>
-                            )}
-                        </div>
-
-                        <hr style={{margin: '30px 0'}} />
-
-                        {/* --- Seção "Livros Curtidos" --- */}
-                        <h3>Meus últimos 5 livros curtidos</h3>
-                        {likedBooks.length > 0 ? (
-                            <div className="book-list">
-                                {likedBooks.map(book => (
-                                    <div key={book.id} className="book-card">
-                                        <Link to={`/book/${book.id}`}>
-                                            <img 
-                                                src={book.capa} 
-                                                alt={`Capa de ${book.titulo}`} 
-                                            />
-                                            <h3>{book.titulo}</h3>
-                                        </Link>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p>Você ainda não curtiu nenhum livro.</p>
-                        )}
-                    </>
-                )}
-
-                {/* === ABA DE CONFIGURAÇÕES === */}
-                {activeTab === 'config' && (
-                    <div className="admin-form-container">
-                        {message && <p className="message">{message}</p>}
-                        
+                {/* --- CARTÃO DE CABEÇALHO --- */}
+                <div className="profile-header-card">
+                    <div className="profile-avatar-large">
+                        {userInitials}
+                    </div>
+                    
+                    <div className="profile-info-form">
+                        <h2>Meu Perfil</h2>
                         <form onSubmit={handleProfileUpdate}>
-                            <div className="form-group">
-                                <label>Email (não pode ser alterado)</label>
-                                <input type="email" value={user.email} disabled />
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Nome</label>
+                                    <input 
+                                        type="text" 
+                                        value={nome} 
+                                        onChange={e => setNome(e.target.value)} 
+                                        required 
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Email</label>
+                                    <input type="email" value={user.email} disabled className="input-disabled" />
+                                </div>
                             </div>
-                            <div className="form-group">
-                                <label>Nome</label>
-                                <input type="text" value={nome} onChange={e => setNome(e.target.value)} required />
-                            </div>
-                            <button type="submit" className="submit-btn">Salvar Alterações</button>
+                            <button type="submit" className="btn-save-profile">Salvar Alterações</button>
+                            {message && <p className="success-message">{message}</p>}
                         </form>
                     </div>
-                )}
+                </div>
+
+                {/* --- ESTATÍSTICAS RÁPIDAS (Opcional, mas visualmente rico) --- */}
+                <div className="profile-stats-bar">
+                    <div className="stat-item">
+                        <span className="stat-value">{myLists.length}</span>
+                        <span className="stat-label">Listas</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-value">{likedBooks.length}</span>
+                        <span className="stat-label">Curtidos</span>
+                    </div>
+                    <div className="stat-item">
+                        <span className="stat-value">{followingList.length}</span>
+                        <span className="stat-label">Seguindo</span>
+                    </div>
+                </div>
+
+                {/* --- MINHAS LISTAS --- */}
+                <section className="profile-section">
+                    <div className="section-header-profile">
+                        <h3>Minhas Listas</h3>
+                        <button onClick={() => openCreateListModal()} className="btn-add-new">
+                            + Criar Nova Lista
+                        </button>
+                    </div>
+
+                    {myLists.length > 0 ? (
+                        <div className="lists-grid">
+                            {myLists.map(list => (
+                                <div key={list.id} className="list-card">
+                                    <div className="list-card-content" onClick={() => openListDetailModal(list.id)}>
+                                        <span className="list-icon">📂</span>
+                                        <h4>{list.nome}</h4>
+                                    </div>
+                                    <div className="list-card-actions">
+                                        <button onClick={() => openListDetailModal(list.id)} title="Ver">👁️</button>
+                                        <button onClick={() => openCreateListModal(list)} title="Editar">✏️</button>
+                                        <button 
+                                            onClick={() => openConfirmDeleteModal(list.id, () => handleDeleteList(list.id))} 
+                                            title="Excluir" 
+                                            className="btn-delete-icon"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="empty-text">Você ainda não criou nenhuma lista.</p>
+                    )}
+                </section>
+
+                {/* --- LIVROS CURTIDOS --- */}
+                <section className="profile-section">
+                    <h3>Últimos Curtidos</h3>
+                    {likedBooks.length > 0 ? (
+                        <div className="books-grid-profile">
+                            {likedBooks.map(book => (
+                                <Link to={`/book/${book.id}`} key={book.id} className="book-card-mini">
+                                    <img src={book.capa} alt={book.titulo} />
+                                    <div className="book-card-mini-overlay">
+                                        <span>{book.titulo}</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="empty-text">Você ainda não curtiu nenhum livro.</p>
+                    )}
+                </section>
+
+                {/* --- SEGUINDO --- */}
+                <section className="profile-section">
+                    <h3>Quem você segue</h3>
+                    {followingList.length > 0 ? (
+                        <div className="following-grid">
+                            {followingList.map(followedUser => (
+                                <div 
+                                    key={followedUser.id} 
+                                    className="following-card"
+                                    onClick={() => setViewingProfileId(followedUser.id)}
+                                >
+                                    <div className="following-avatar">
+                                        {followedUser.nome.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span>{followedUser.nome}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="empty-text">Você ainda não segue ninguém.</p>
+                    )}
+                </section>
             </div>
-            
-            {/* O Modal de Perfil de Usuário continua aqui */}
+
+            {/* Modal de Perfil de Outro Usuário */}
             {viewingProfileId && (
                 <UserProfileModal 
                     userId={viewingProfileId}
