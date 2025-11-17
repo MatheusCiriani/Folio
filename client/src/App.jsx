@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal'; // Criaremos este a seguir
@@ -23,6 +24,38 @@ import './App.css';
 
 function App() {
   const [authModal, setAuthModal] = useState({ isOpen: false, view: 'login' });
+
+  useEffect(() => {
+    // Configura um interceptador de respostas do Axios
+    const interceptor = axios.interceptors.response.use(
+      response => response, // Passa as respostas de sucesso
+      error => {
+        // Verifica se o erro é de token inválido/expirado
+        if (error.response && (error.response.status === 400 || error.response.status === 401)) {
+          const errorMessage = error.response.data?.message || '';
+          
+          // O authMiddleware.js envia 'Token inválido.'
+          if (errorMessage.includes('Token inválido')) { 
+            console.error("Token expirado ou inválido. Deslogando...");
+            
+            // Limpa os dados do usuário do localStorage
+            localStorage.removeItem('token');
+            localStorage.removeItem('usuarios');
+            
+            // Força um recarregamento da página para atualizar a UI
+            window.location.reload(); 
+          }
+        }
+        // Retorna o erro para que outros 'catch' possam lidar com ele
+        return Promise.reject(error);
+      }
+    );
+
+    // Limpa o interceptador quando o componente for desmontado
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
 
   // --- NOVOS ESTADOS DE MODAL ---
   // 1. Para Criar/Editar Lista (controlado pela ProfilePage)
