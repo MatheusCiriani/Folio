@@ -160,3 +160,26 @@
         justify-content: space-between;
     }
 }
+
+/* * 1. ESTILO PARA O NOME DOS OUTROS USUÁRIOS
+ * (Cursor de "mãozinha" e animação de crescimento)
+ */
+.comment-author-clickable {
+    cursor: pointer;
+    text-decoration: underline;
+    transition: transform 0.2s ease-out; /* A animação */
+}
+
+.comment-author-clickable:hover {
+    transform: scale(1.05); /* O "crescimento" que você pediu */
+}
+
+
+/* * 2. ESTILO PARA O NOME DO PRÓPRIO USUÁRIO LOGADO
+ * (Remove a "mãozinha" e a animação)
+ */
+.comment-author-self {
+    cursor: default;
+    text-decoration: none;
+    font-weight: bold; /* Opcional: destaca seu próprio nome */
+}

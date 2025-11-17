@@ -1,7 +1,7 @@
 /* --- Estilos da Página de Detalhes (de App.css) --- */
 .book-detail-container {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 2.5fr 2.5fr;
     gap: 3rem;
     margin-top: 2rem;
     align-items: flex-start;
@@ -241,4 +241,43 @@
 }
 .add-to-list-button:hover {
     opacity: 0.9;
+}
+
+/* --- Estilos da Sinopse "Ler Mais" --- */
+
+.synopsis-container {
+    position: relative;
+}
+
+/* 1. O estilo do texto quando está "fechado" (clamped) */
+.synopsis-container.clamped .synopsis-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Define as 4 linhas que você pediu */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 2. O efeito "fade" (transparência) que você pediu */
+/* Só aparece se estiver 'clamped' E 'is-overflowing' */
+.synopsis-container.clamped.is-overflowing::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px; 
+    /* O 'var(--container-bg)' deve ser a cor de fundo do seu container */
+    background: linear-gradient(to top, var(--container-bg) 10%, transparent);
+}
+
+/* 3. O botão de "Ler mais / Esconder" */
+.btn-expand-synopsis {
+    background: none;
+    border: none;
+    color: var(--primary-blue);
+    cursor: pointer;
+    font-weight: bold;
+    padding: 8px 0 0 0;
+    text-decoration: underline;
+    font-size: 0.9rem;
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import ConfirmModal from '../components/ConfirmModal'; // <<< IMPORTE O NOVO COMPONENTE
@@ -57,6 +57,11 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
     const [likes, setLikes] = useState(0);
     const [userLiked, setUserLiked] = useState(false);
     const [viewingProfileId, setViewingProfileId] = useState(null);
+
+    // --- NOVOS ESTADOS PARA "LER MAIS" ---
+    const [isClamped, setIsClamped] = useState(true);
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const synopsisRef = useRef(null);
 
     const fetchBookDetails = useCallback(async () => {
         try {
@@ -124,6 +129,14 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
         fetchBookDetails();
     }, [fetchBookDetails]);
 
+    useEffect(() => {
+        // Verifica se o texto da sinopse está transbordando
+        if (synopsisRef.current) {
+            const hasOverflow = synopsisRef.current.scrollHeight > synopsisRef.current.clientHeight;
+            setIsOverflowing(hasOverflow);
+        }
+    }, [book?.sinopse, synopsisRef]); // Roda sempre que o livro (e sua sinopse) mudar
+
     const handleSubmitReview = async (e) => {
         e.preventDefault();
         if (newRating === 0 || newComment.trim() === '') {
@@ -163,9 +176,13 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
             );
 
             // Atualiza estados baseado na resposta
-            setUserLiked(response.data.liked);
-            // Recarrega contagem e comentários/avaliações atualizadas
-            fetchBookDetails();
+            // setUserLiked(response.data.liked);
+            // // Recarrega contagem e comentários/avaliações atualizadas
+            // fetchBookDetails();
+
+            const { liked } = response.data;
+            setUserLiked(liked);
+            setLikes(prevLikes => liked ? prevLikes + 1 : prevLikes - 1);
         } catch (err) {
             console.error('Erro ao curtir livro:', err);
             alert('Não foi possível curtir o livro.');
@@ -180,14 +197,31 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
         }
 
         try {
-            await axios.post(
+            const res = await axios.post(
                 `/api/comments/${commentId}/like`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             // Atualiza os comentários e suas curtidas
-            fetchBookDetails();
+            // fetchBookDetails();
+
+            // --- ATUALIZAÇÃO LOCAL ---
+            // Atualiza apenas o comentário específico no estado
+            const { liked } = res.data;
+            setComments(prevComments => 
+                prevComments.map(comment => {
+                    if (comment.id === commentId) {
+                        return {
+                            ...comment,
+                            curtidas: liked ? comment.curtidas + 1 : comment.curtidas - 1,
+                            userLiked: liked
+                        };
+                    }
+                    return comment;
+                })
+            );
+            // --- FIM DA ATUALIZAÇÃO ---
         } catch (err) {
             console.error('Erro ao curtir comentário:', err);
             alert('Não foi possível curtir o comentário.');
@@ -293,7 +327,31 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
                         <span>⭐ {averageRating} ({rating.total_avaliacoes} avaliações)</span>
                     </div>
                 )}
-                <p>{book.sinopse}</p>
+                {/* --- LÓGICA DA SINOPSE "LER MAIS" --- */}
+                <div 
+                    className={`
+                        synopsis-container 
+                        ${isClamped ? 'clamped' : ''} 
+                        ${isOverflowing ? 'is-overflowing' : ''}
+                    `}
+                >
+                    <p className="synopsis-text" ref={synopsisRef}>
+                        {book.sinopse}
+                    </p>
+                </div>
+
+                {/* Só mostra o botão se o texto realmente transbordar */}
+                {isOverflowing && (
+                    <div>
+                        <button 
+                            onClick={() => setIsClamped(!isClamped)} 
+                            className="btn-expand-synopsis"
+                        >
+                            {isClamped ? 'Ler mais' : 'Esconder'}
+                        </button>
+                    </div>
+                )}
+                {/* --- FIM DA LÓGICA --- */}
                 <button onClick={handleLike} className="like-button">
                     {userLiked ? '💔 Remover Curtida' : '❤️ Curtir Livro'} ({likes})
                 </button>
@@ -352,33 +410,45 @@ const BookDetailPage = ({ openAuthModal, openAddToListModal, openListDetailModal
                         ) : (
                             /* MODO DE VISUALIZAÇÃO (NORMAL) */
                             <>
-                                <div className="comment-header">
-                                    <strong 
-                                        className="comment-author-name" 
-                                        onClick={() => setViewingProfileId(comment.usuario_id)}
-                                    >
-                                        {comment.usuario_nome}
-                                    </strong>
-                                    {comment.nota > 0 && (
-                                        <span className="comment-stars">{'⭐'.repeat(comment.nota)}</span>
-                                    )}
-                                </div>
-                                <p>{comment.texto}</p>
-                                <div className="comment-actions">
-                                    <button
-                                        onClick={() => handleCommentLike(comment.id)}
-                                        className={comment.userLiked ? 'liked' : ''}>
-                                        👍 {comment.curtidas}
-                                    </button>
+                                {(() => {
+                                    // 1. Verifica se o usuário está logado E se o comentário é dele
+                                    const isSelfComment = user && user.id === comment.usuario_id;
 
-
-                                    {user && user.id === comment.usuario_id && (
+                                    return (
                                         <>
-                                            <button onClick={() => handleEditClick(comment)} className="btn-edit">Editar</button>
-                                            <button onClick={() => handleDeleteClick(comment.id)} className="btn-delete">Deletar</button>
+                                            <div className="comment-header">
+                                                <strong 
+                                                    // 2. Aplica a classe CSS correta
+                                                    className={isSelfComment ? 'comment-author-self' : 'comment-author-clickable'}
+                                                    
+                                                    // 3. Só adiciona o onClick se NÃO for o usuário
+                                                    onClick={isSelfComment ? null : () => setViewingProfileId(comment.usuario_id)}
+                                                >
+                                                    {comment.usuario_nome}
+                                                </strong>
+                                                {comment.nota > 0 && (
+                                                    <span className="comment-stars">{'⭐'.repeat(comment.nota)}</span>
+                                                )}
+                                            </div>
+                                            <p>{comment.texto}</p>
+                                            <div className="comment-actions">
+                                                <button
+                                                    onClick={() => handleCommentLike(comment.id)}
+                                                    className={comment.userLiked ? 'liked' : ''}>
+                                                    👍 {comment.curtidas}
+                                                </button>
+
+
+                                                {user && user.id === comment.usuario_id && (
+                                                    <>
+                                                        <button onClick={() => handleEditClick(comment)} className="btn-edit">Editar</button>
+                                                        <button onClick={() => handleDeleteClick(comment.id)} className="btn-delete">Deletar</button>
+                                                    </>
+                                                )}
+                                            </div>
                                         </>
-                                    )}
-                                </div>
+                                    );
+                                })()}
                             </>
                         )}
                     </div>

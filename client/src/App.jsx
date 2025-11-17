@@ -140,10 +140,8 @@ function App() {
             <CreateListModal
                 closeModal={closeCreateListModal}
                 listToEdit={createListModal.listToEdit}
-                // Precisamos de um jeito de recarregar a ProfilePage
-                // A melhor forma é passando a função de recarregar
-                // Por agora, vamos recarregar a página inteira
-                onListCreated={() => window.location.reload()} // Solução simples
+                onListCreated={createListModal.onListCreated} // <-- Passe o callback original
+                openListDetailModal={openListDetailModal} // <-- PASSE A NOVA PROP
             />
         )}
         

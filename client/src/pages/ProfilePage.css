@@ -135,3 +135,35 @@
 .btn-action:hover {
     background-color: #f4f4f4;
 }
+
+/* --- Estilos das Abas do Perfil --- */
+.profile-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--input-border, #eee);
+    margin-bottom: 2rem;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #888;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px; /* Alinha com a borda principal */
+}
+
+.tab-button.active {
+    color: var(--primary-blue);
+    border-bottom-color: var(--primary-blue);
+}
+
+.tab-button:hover:not(.active) {
+    color: #333;
+}
+
+.tab-content {
+    /* O conteúdo das abas */
+}

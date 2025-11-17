@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './AuthModal.css'; // Reutilizando o estilo do AuthModal
 
-const CreateListModal = ({ closeModal, onListCreated, listToEdit }) => {
+const CreateListModal = ({ closeModal, onListCreated, listToEdit, openListDetailModal }) => {
     const [nome, setNome] = useState('');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
@@ -25,16 +25,22 @@ const CreateListModal = ({ closeModal, onListCreated, listToEdit }) => {
             const config = { headers: { Authorization: `Bearer ${token}` } };
             
             if (listToEdit) {
-                // Modo Edição
+                // Modo Edição (comportamento antigo)
                 await axios.put(`/api/lists/${listToEdit.id}`, { nome }, config);
+                if (onListCreated) onListCreated(); // Atualiza a ProfilePage
+                closeModal();
             } else {
-                // Modo Criação
-                await axios.post('/api/lists/', { nome }, config);
+                // Modo Criação (NOVO FLUXO)
+                const res = await axios.post('/api/lists/', { nome }, config);
+                const newList = res.data; // A API retorna { id: ..., nome: ... }
+                
+                if (onListCreated) onListCreated(); // Atualiza a ProfilePage
+                closeModal(); // 1. Fecha o modal "Criar Lista"
+
+                // 2. ABRE O MODAL "VER LISTA"
+                openListDetailModal(newList.id); 
             }
             
-            onListCreated(); // Diz à página pai (ProfilePage) para recarregar as listas
-            closeModal();
-
         } catch (err) {
             setMessage(err.response?.data?.message || 'Erro ao salvar lista.');
         } finally {
