@@ -20,24 +20,52 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const { genre } = req.query; // Pega o ?genre=ID da URL
-        const pool = await poolPromise; // Espera o pool ficar pronto
+        // 1. Pega TODOS os parâmetros de busca
+        const { genre, search, excludeListId } = req.query; 
+        const pool = await poolPromise;
 
-        let query = `
-            SELECT DISTINCT l.* FROM livros l
-        `;
+        let query = 'SELECT DISTINCT l.* FROM livros l';
         const params = [];
+        let joinClauses = [];
+        let whereClauses = [];
 
-        // Se um ID de gênero foi passado, fazemos o JOIN
+        // 2. Lógica para o JOIN de Gênero
         if (genre && genre !== '') {
-            query += `
-                JOIN livros_generos lg ON l.id = lg.livro_id
-                WHERE lg.genero_id = ?
-            `;
+            joinClauses.push('JOIN livros_generos lg ON l.id = lg.livro_id');
+            whereClauses.push('lg.genero_id = ?');
             params.push(genre);
         }
+        
+        // 3. Lógica para a BUSCA por texto
+        if (search && search.trim() !== '') {
+            whereClauses.push('(l.titulo LIKE ? OR l.autor LIKE ?)');
+            params.push(`%${search}%`); // Busca por partes do nome
+            params.push(`%${search}%`); // Busca por partes do autor
+        }
 
-        query += " ORDER BY l.titulo ASC";
+        // 4. Lógica para EXCLUIR livros que já estão na lista
+        if (excludeListId && excludeListId.trim() !== '') {
+            joinClauses.push(
+                'LEFT JOIN listas_livros ll ON l.id = ll.livro_id AND ll.lista_id = ?'
+            );
+            whereClauses.push('ll.livro_id IS NULL');
+            params.push(excludeListId);
+        }
+
+        // 5. Monta a query final
+        if (joinClauses.length > 0) {
+            query += ' ' + joinClauses.join(' ');
+        }
+        if (whereClauses.length > 0) {
+            query += ' WHERE ' + whereClauses.join(' AND ');
+        }
+
+        query += ' ORDER BY l.titulo ASC';
+        
+        // 6. Limita os resultados se for uma busca (para não sobrecarregar)
+        if (search) {
+            query += ' LIMIT 10';
+        }
 
         const [rows] = await pool.execute(query, params);
         res.status(200).json(rows);

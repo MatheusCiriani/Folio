@@ -1,0 +1,118 @@
+/* /Folio/client/src/components/ListDetailModal.css */
+.list-detail-modal {
+    max-width: 550px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.list-detail-title {
+    text-align: center;
+    margin: 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+/* --- Barra de Busca --- */
+.list-search-container input {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--input-border, #ccc);
+}
+
+/* --- Resultados da Busca --- */
+.search-results-list {
+    max-height: 200px; /* Limita a altura */
+    overflow-y: auto; /* Adiciona scroll se passar */
+    border-radius: 8px;
+}
+
+.search-state {
+    padding: 10px;
+    text-align: center;
+    color: #666;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.search-result-item:last-child {
+    border-bottom: none;
+}
+.search-result-item:hover {
+    background-color: #f9f9f9;
+}
+
+.search-result-item img {
+    width: 40px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.search-result-item .book-title {
+    flex-grow: 1; /* Ocupa o espaço */
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.btn-add-book {
+    background-color: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.btn-add-book:hover {
+    opacity: 0.9;
+}
+
+/* --- Livros na Lista --- */
+.books-in-list-container {
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+.books-in-list-container h4 {
+    margin: 0 0 15px 0;
+}
+
+.books-in-list {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.book-in-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+.book-in-list-item:hover {
+    background-color: var(--background-color, #f9f9f9);
+}
+
+.book-in-list-item img {
+    width: 40px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.book-in-list-item .book-title {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
