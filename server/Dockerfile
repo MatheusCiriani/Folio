@@ -1,0 +1,8 @@
+GNU nano 7.2                                          Dockerfile                                                   # Este é o Dockerfile CORRETO para o seu projeto JavaScript
+FROM node:18-alpine
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3001
+CMD [ "npm", "start" ]
