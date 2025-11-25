@@ -4,6 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const dbPoolPromise = require('./db'); // Importa a promessa do db.js
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
 
 // Importação das Rotas
 const authRoutes = require('./routes/auth');
@@ -16,6 +18,47 @@ const listRoutes = require('./routes/lists');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Configuração das opções do Swagger
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0', // Versão do OpenAPI
+        info: {
+            title: 'Fólio API',
+            version: '1.0.0',
+            description: 'Documentação da API do projeto Fólio para gerenciamento de livros.',
+            contact: {
+                name: 'Suporte Fólio',
+                email: 'suporte@folio.com'
+            }
+        },
+        servers: [
+            {
+                url: 'http://localhost:3001', // Ajuste a porta conforme seu .env
+                description: 'Servidor Local'
+            }
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
+                },
+            },
+        },
+        security: [{
+            bearerAuth: []
+        }],
+    },
+    // Caminho para os arquivos que contêm as anotações (suas rotas)
+    apis: ['./routes/*.js'], 
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+
+// Rota para servir a documentação
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Middlewares
 app.use(cors());
