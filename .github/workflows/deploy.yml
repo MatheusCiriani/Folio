@@ -20,14 +20,14 @@ jobs:
     - name: Build e Enviar Backend
       uses: docker/build-push-action@v4
       with:
-        context: ./Folio/server
+        context: ./server
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/folio-backend:latest
 
     - name: Build e Enviar Frontend
       uses: docker/build-push-action@v4
       with:
-        context: ./Folio/client
+        context: ./client
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/folio-frontend:latest
 
