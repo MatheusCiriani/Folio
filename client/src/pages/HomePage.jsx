@@ -98,7 +98,7 @@ const HomePage = () => {
                             value={genreFilter} 
                             onChange={(e) => setGenreFilter(e.target.value)}
                         >
-                            <option value="">Todos os Gêneros</option>
+                            <option value="">Todos os Generos</option>
                             {allGenres.map(genre => (
                                 <option key={genre.id} value={genre.id}>
                                     {genre.nome}
