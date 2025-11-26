@@ -1,4 +1,4 @@
-# Este é o Dockerfile CORRETO para o seu projeto JavaScript
+# Deploy testado
 FROM node:18-alpine
 WORKDIR /usr/src/app
 COPY package*.json ./
