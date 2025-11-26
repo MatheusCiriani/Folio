@@ -23,6 +23,7 @@ jobs:
         context: ./server
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/folio-backend:latest
+        labels: com.folio.project=backend
 
     - name: Build e Enviar Frontend
       uses: docker/build-push-action@v4
@@ -30,6 +31,7 @@ jobs:
         context: ./client
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/folio-frontend:latest
+        labels: com.folio.project=frontend
 
   deploy-to-server:
     needs: build-and-push # Só roda se o build funcionar
@@ -58,4 +60,8 @@ jobs:
           # (Isso recria apenas backend e frontend, mantendo o banco seguro)
           docker-compose up -d backend frontend
           
+          # 5. Limpar APENAS imagens velhas que pertençam ao projeto Folio
+          # O filtro 'label' garante que não tocamos em imagens de outros alunos
+          docker image prune -f --filter "label=com.folio.project"
+
           echo "✅ Deploy Finalizado!"
