@@ -1,8 +1,9 @@
 # Chave secreta para o JWT (JSON Web Token)
 JWT_SECRET=umSegredoMuitoSeguro123
-
+# Porta do servidor
+# Credenciais do Banco de Dados
 DB_HOST= 127.0.0.1
 DB_PORT=3307
-DB_USER=
-DB_PASSWORD=
+DB_USER=root
+DB_PASSWORD=admin
 DB_NAME=folio_db
