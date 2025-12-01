@@ -32,7 +32,7 @@ model Livro {
   titulo    String    @db.VarChar(255)
   autor     String    @db.VarChar(255)
   sinopse   String?   @db.Text
-  capa      String?   @db.VarChar(255)
+  capa      String?   @db.Text
   criado_em DateTime  @default(now()) @map("criado_em")
 
   avaliacoes  Avaliacao[]
