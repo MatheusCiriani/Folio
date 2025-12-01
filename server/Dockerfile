@@ -5,6 +5,8 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
+ENV DATABASE_URL="mysql://build:build@localhost:3306/build"
+
 # --- NOVA LINHA OBRIGATÓRIA PARA O PRISMA ---
 RUN npx prisma generate
 
