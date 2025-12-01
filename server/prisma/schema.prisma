@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        Int       @id @default(autoincrement())
+  nome      String    @db.VarChar(255)
+  email     String    @unique @db.VarChar(255)
+  senha     String    @db.VarChar(255)
+  criado_em DateTime  @default(now()) @map("criado_em")
+  role      String    @default("user") @db.VarChar(50)
+
+  avaliacoes          Avaliacao[]
+  comentarios         Comentario[]
+  curtidas            Curtida[]
+  listas              ListaUsuario[]
+  indicacoesFeitas    Indicacao[] @relation("IndicacaoOrigem")
+  indicacoesRecebidas Indicacao[] @relation("IndicacaoDestino")
+  seguindo            Seguir[]    @relation("Seguidor")
+  seguidores          Seguir[]    @relation("Seguido")
+
+  @@map("usuarios")
+}
+
+model Livro {
+  id        Int       @id @default(autoincrement())
+  titulo    String    @db.VarChar(255)
+  autor     String    @db.VarChar(255)
+  sinopse   String?   @db.Text
+  capa      String?   @db.VarChar(255)
+  criado_em DateTime  @default(now()) @map("criado_em")
+
+  avaliacoes  Avaliacao[]
+  comentarios Comentario[]
+  curtidas    Curtida[]
+  generos     LivroGenero[]
+  listas      ListaLivro[]
+  indicacoes  Indicacao[]
+
+  @@map("livros")
+}
+
+model Genero {
+  id     Int           @id @default(autoincrement())
+  nome   String        @unique @db.VarChar(100)
+  livros LivroGenero[]
+
+  @@map("generos")
+}
+
+model LivroGenero {
+  livro_id  Int
+  genero_id Int
+  livro     Livro  @relation(fields: [livro_id], references: [id], onDelete: Cascade)
+  genero    Genero @relation(fields: [genero_id], references: [id], onDelete: Cascade)
+
+  @@id([livro_id, genero_id])
+  @@map("livros_generos")
+}
+
+model Avaliacao {
+  id         Int      @id @default(autoincrement())
+  livro_id   Int
+  usuario_id Int
+  nota       Int      @db.TinyInt
+  criado_em  DateTime @default(now()) @map("criado_em")
+  livro      Livro    @relation(fields: [livro_id], references: [id], onDelete: Cascade)
+  usuario    Usuario  @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@map("avaliacoes")
+}
+
+model Comentario {
+  id         Int       @id @default(autoincrement())
+  livro_id   Int
+  usuario_id Int
+  texto      String    @db.Text
+  criado_em  DateTime  @default(now()) @map("criado_em")
+  livro      Livro     @relation(fields: [livro_id], references: [id], onDelete: Cascade)
+  usuario    Usuario   @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  curtidas   Curtida[]
+
+  @@map("comentarios")
+}
+
+model Curtida {
+  id            Int         @id @default(autoincrement())
+  usuario_id    Int
+  livro_id      Int?
+  comentario_id Int?
+  criado_em     DateTime    @default(now()) @map("criado_em")
+  usuario       Usuario     @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  livro         Livro?      @relation(fields: [livro_id], references: [id], onDelete: Cascade)
+  comentario    Comentario? @relation(fields: [comentario_id], references: [id], onDelete: Cascade)
+
+  @@map("curtidas")
+}
+
+model ListaUsuario {
+  id         Int          @id @default(autoincrement())
+  usuario_id Int
+  nome       String       @db.VarChar(255)
+  criado_em  DateTime     @default(now()) @map("criado_em")
+  usuario    Usuario      @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  livros     ListaLivro[]
+
+  @@unique([usuario_id, nome])
+  @@map("listas_usuarios")
+}
+
+model ListaLivro {
+  lista_id      Int
+  livro_id      Int
+  adicionado_em DateTime     @default(now()) @map("adicionado_em")
+  lista         ListaUsuario @relation(fields: [lista_id], references: [id], onDelete: Cascade)
+  livro         Livro        @relation(fields: [livro_id], references: [id], onDelete: Cascade)
+
+  @@id([lista_id, livro_id])
+  @@map("listas_livros")
+}
+
+model Indicacao {
+  id                 Int      @id @default(autoincrement())
+  livro_id           Int
+  usuario_origem_id  Int
+  usuario_destino_id Int
+  criado_em          DateTime @default(now()) @map("criado_em")
+  livro              Livro    @relation(fields: [livro_id], references: [id], onDelete: Cascade)
+  origem             Usuario  @relation("IndicacaoOrigem", fields: [usuario_origem_id], references: [id], onDelete: Cascade)
+  destino            Usuario  @relation("IndicacaoDestino", fields: [usuario_destino_id], references: [id], onDelete: Cascade)
+
+  @@map("indicacoes")
+}
+
+model Seguir {
+  usuario_seguidor_id Int
+  usuario_seguido_id  Int
+  criado_em           DateTime @default(now()) @map("criado_em")
+  seguidor            Usuario  @relation("Seguidor", fields: [usuario_seguidor_id], references: [id], onDelete: Cascade)
+  seguido             Usuario  @relation("Seguido", fields: [usuario_seguido_id], references: [id], onDelete: Cascade)
+
+  @@id([usuario_seguidor_id, usuario_seguido_id])
+  @@map("seguir")
+}
+
+// CORREÇÃO AQUI: Mudamos para VarChar(512) para corrigir o erro P1012
+model TokenBlacklist {
+  token          String   @id @db.VarChar(512)
+  data_expiracao DateTime @map("data_expiracao")
+
+  @@map("token_blacklist")
+}

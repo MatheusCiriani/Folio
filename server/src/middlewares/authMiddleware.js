@@ -1,6 +1,5 @@
-// server/authMiddleware.js
 const jwt = require('jsonwebtoken');
-const poolPromise = require('./db'); // <<< 1. Renomeie a importação
+const prisma = require('../config/prismaClient'); // <--- ATENÇÃO: Usa Prisma agora
 
 const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -12,26 +11,20 @@ const authMiddleware = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     try {
-        const pool = await poolPromise; // <<< 2. Adicione esta linha
-        
-        // --- VERIFICAÇÃO DA BLACKLIST ---
-        // Agora 'pool.execute' vai funcionar
-        const [rows] = await pool.execute(
-            "SELECT token FROM token_blacklist WHERE token = ?",
-            [token]
-        );
+        // Verifica blacklist usando Prisma
+        const blacklisted = await prisma.tokenBlacklist.findUnique({
+            where: { token: token }
+        });
 
-        if (rows.length > 0) {
+        if (blacklisted) {
             return res.status(401).json({ message: 'Token inválido (logout).' });
         }
-        // --- FIM DA VERIFICAÇÃO ---
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = decoded; 
         next(); 
     } catch (error) {
-        // Se a verificação do pool ou do jwt.verify falhar
-        console.error("Erro no authMiddleware:", error); // Adicionei este log para te ajudar no futuro
+        console.error("Erro no authMiddleware:", error);
         res.status(400).json({ message: 'Token inválido.' });
     }
 };
